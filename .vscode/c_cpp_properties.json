@@ -1,0 +1,25 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/marios/crazyswarm/ros_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/marios/catkin_ws/devel/include/**",
+        "/home/marios/crazyswarm/ros_ws/src/externalDependencies/libobjecttracker/include/**",
+        "/home/marios/catkin_ws/src/mav_comm/mav_msgs/include/**",
+        "/home/marios/catkin_ws/src/mav_comm/mav_planning_msgs/include/**",
+        "/home/marios/catkin_ws/src/CrazyS/rotors_control/include/**",
+        "/home/marios/catkin_ws/src/CrazyS/rotors_gazebo/include/**",
+        "/home/marios/catkin_ws/src/CrazyS/rotors_gazebo_plugins/include/**",
+        "/home/marios/catkin_ws/src/CrazyS/rotors_joy_interface/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ],
+  "version": 4
+}
