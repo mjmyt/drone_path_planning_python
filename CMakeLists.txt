@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(3Dvisualization)
+project(drone_path_planning)
 
 
 
@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   tf_conversions
+  nav_msgs
 )
 
 set (CMAKE_CXX_STANDARD 11)
@@ -23,7 +24,7 @@ find_package(PCL REQUIRED)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -79,6 +80,7 @@ generate_messages(
   DEPENDENCIES
    std_msgs
    geometry_msgs
+   nav_msgs
 )
 
 ## Generate actions in the 'action' folder
@@ -130,6 +132,7 @@ catkin_package(
     message_runtime
     std_msgs
     tf
+    nav_msgs
     # crazyflie_cpp
     # libobjecttracker
 #  DEPENDS system_lib
@@ -191,7 +194,7 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 install(PROGRAMS
-  scripts/droneMarkerVis.py
+  scripts/path_vis.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

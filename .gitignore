@@ -1,0 +1,8 @@
+build/
+devel/
+src/CMakeLists.txt
+.DS_Store
+*.pyc
+*~
+*.mexa64
+.vscode
