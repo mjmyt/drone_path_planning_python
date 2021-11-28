@@ -32,8 +32,8 @@ def calculate_trajectory(waypoints):
     m = len(waypoints)
     n = m - 1
 
-    A = np.zeros((8*n, 8*m))
-    b = np.zeros((8*m, 1))
+    A = np.zeros((8*n, 8*n))
+    b = np.zeros((8*n, 1))
     print("A.shape:", A.shape)
     print("b.shape:", b.shape)
 
@@ -54,7 +54,7 @@ def calculate_trajectory(waypoints):
                 if i == 0:
                     A[j, 8*i:8*(i+1)] = arr
                 else:
-                    A[-(4-j), 8*i:8*(i+1)] = arr
+                    A[-(4-j), 8*(i-1):8*(i)] = arr
 
                 pol = pol.derivative()
 
@@ -80,13 +80,14 @@ def calculate_trajectory(waypoints):
             startl = 4+(i-1)*8  # start line index
             endl = 4+(i-1)*8 + 6   # end line index
             # conitnuity constraints
-            A[startl:endl, 8*i:8*(i+1)] = array_to_add[1:7, :]
-            A[startl:endl, 8*(i+1):8*(i+2)] = -array_to_add[1:7, :]
+            A[startl:endl, 8*(i-1):8*(i)] = array_to_add[1:7, :]
+            A[startl:endl, 8*(i):8*(i+1)] = -array_to_add[1:7, :]
+
             b[startl:endl] = np.zeros((6, 1))
 
             # waypoints constraints
-            A[endl, 8*i:8*(i+1)] = array_to_add[0, :]
-            A[endl+1, 8*(i+1):8*(i+2)] = array_to_add[0, :]
+            A[endl,  8*(i-1):8*(i)] = array_to_add[0, :]
+            A[endl+1, 8*(i):8*(i+1)] = array_to_add[0, :]
 
             b[endl] = wp.x
             b[endl+1] = wp.x
