@@ -147,11 +147,9 @@ class PiecewisePolynomial():
     def __init__(self, pols: list, time_setpoints: list):
         self.pols = pols
         self.nOfPols = len(pols)
-        self.time_setpoints = np.zeros(self.nOfPols+1)
 
-        self.time_setpoints[1:] = time_setpoints
-
-        print("time_setpoints:", self.time_setpoints)
+        # self.time_setpoints = np.zeros(self.nOfPols+1)
+        self.time_setpoints = time_setpoints
 
     def eval(self, t):
         assert t >= 0
@@ -163,6 +161,46 @@ class PiecewisePolynomial():
 
             if t >= tpr and t < tnxt:
                 return self.pols[i].eval(t)
+
+
+class Waypoint():
+    def __init__(self, x, y, z, yaw):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.yaw = yaw
+
+    # constants
+    WP_TYPE_X = 0
+    WP_TYPE_Y = 1
+    WP_TYPE_Z = 2
+    WP_TYPE_YAW = 3
+
+    def getType(self, type):
+        if (type == Waypoint.WP_TYPE_X):
+            return self.x
+        elif (type == Waypoint.WP_TYPE_Y):
+            return self.y
+        elif (type == Waypoint.WP_TYPE_Z):
+            return self.z
+        elif (type == Waypoint.WP_TYPE_YAW):
+            return self.yaw
+        else:
+            print("Sorry, invalid type")
+
+
+class Point_time():
+    # Class that combines waypoint and desired time for trajectory generation
+    def __init__(self, wp: Waypoint, t: float):
+        self.wp = wp
+        self.t = t
+
+
+class Point_time1D():
+    # Class that combines waypoint and desired time for trajectory generation
+    def __init__(self, wp: float, t: float):
+        self.wp = wp
+        self.t = t
 
 
 if __name__ == "__main__":
