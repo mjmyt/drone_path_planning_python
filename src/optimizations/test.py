@@ -63,9 +63,7 @@ def calculate_trajectory(waypoints):
             if i == 0:
                 b[0:4] = tmp
             else:
-                b[-5:-1] = tmp
-
-            # print(b)
+                b[-4:] = tmp
 
         else:  # continuity constraints
             array_to_add = np.zeros((8, 8))
@@ -92,9 +90,35 @@ def calculate_trajectory(waypoints):
             b[endl] = wp.x
             b[endl+1] = wp.x
 
+    polynomials_coefficients = np.linalg.solve(a=A, b=b)
+
+    print("n:", n)
+
+    piece_pols = []  # piecewise polynomials
+    for i in range(n):
+        p = polynomials_coefficients[8*i:8*(i+1)]
+        piece_pols.append(Polynomial(p))
+
+    print("polynomials_coefficients.shape:", polynomials_coefficients.shape)
     np.savetxt("A.csv", A, delimiter=",")
     np.savetxt("b.csv", b, delimiter=",")
 
+    return piece_pols
+
 
 if __name__ == "__main__":
-    calculate_trajectory(traj_points)
+    piece_pols = calculate_trajectory(traj_points)
+
+    for p in piece_pols:
+        print(p.p)
+
+    # testing pol values
+
+    t = 2
+    p = piece_pols[2].derivative().derivative()
+
+    print(f"vel at t={t} --> {p.eval(t)}")
+
+    t = 2
+    p = piece_pols[1].derivative().derivative()
+    print(f"vel at t={t} --> {p.eval(t)}")
