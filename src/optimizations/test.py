@@ -11,12 +11,20 @@ class Waypoint():
         self.yaw = yaw
 
 
-waypoints = []
-waypoints.append(Waypoint(-1.0, 0.0,  0.0, 0.0))
-waypoints.append(Waypoint(5.0, 5.0,  0.0, 0.0))
-waypoints.append(Waypoint(5.0, 10.0, 0.0, 0.0))
-waypoints.append(Waypoint(0.0, 10.0, 0.0, 0.0))
-waypoints.append(Waypoint(+2.0, 0.0, 0.0, 0.0))
+class Point_time():
+    # Class that combines waypoint and desired time for trajectory generation
+    def __init__(self, wp: Waypoint, t: float):
+        self.wp = wp
+        self.t = t
+
+
+traj_points = []
+
+traj_points.append(Point_time(Waypoint(-1.0, 0.0,  0.0, 0.0), t=0))
+traj_points.append(Point_time(Waypoint(5.0, 5.0,  0.0, 0.0), t=1))
+traj_points.append(Point_time(Waypoint(5.0, 10.0, 0.0, 0.0), t=2))
+traj_points.append(Point_time(Waypoint(0.0, 10.0, 0.0, 0.0), t=3))
+traj_points.append(Point_time(Waypoint(+2.0, 0.0, 0.0, 0.0), t=4))
 
 
 def calculate_trajectory(waypoints):
@@ -29,17 +37,20 @@ def calculate_trajectory(waypoints):
     print("A.shape:", A.shape)
     print("b.shape:", b.shape)
 
-    for i, wp in enumerate(waypoints):
+    for i, traj_point in enumerate(traj_points):
+        wp = traj_point.wp
+        t = traj_point.t
+
         print("i:", i)
         pol = Polynomial([1, 1, 1, 1, 1, 1, 1, 1])
 
         if (i == 0 or i == n):  # start/end constraints
 
             for j in range(0, n):
-                arr = np.array(pol.p)
+                arr = np.array(pol.pol_coeffs_at_t(t))
 
                 # padding with zeros
-                arr = np.pad(arr, (0, 8-len(arr)), 'constant')
+                arr = np.pad(arr, (8-len(arr), 0), 'constant')
                 if i == 0:
                     A[j, 8*i:8*(i+1)] = arr
                 else:
@@ -59,10 +70,10 @@ def calculate_trajectory(waypoints):
         else:  # continuity constraints
             array_to_add = np.zeros((8, 8))
             for j in range(0, 8):
-                vec = np.array(pol.p)
+                vec = np.array(pol.pol_coeffs_at_t(t))
 
                 # padding with zeros
-                vec = np.pad(vec, (0, 8-len(vec)), 'constant')
+                vec = np.pad(vec, (8-len(vec), 0), 'constant')
                 array_to_add[j, :] = vec
                 pol = pol.derivative()
 
@@ -85,4 +96,4 @@ def calculate_trajectory(waypoints):
 
 
 if __name__ == "__main__":
-    calculate_trajectory(waypoints)
+    calculate_trajectory(traj_points)
