@@ -127,7 +127,52 @@ class Trajectory:
             current_t = current_t + p.duration
 
 
-if __name__ == "__main__":
-    pol = Polynomial([1, 1, 1, 1, 1, 1, 1, 1])
+class PiecewisePolynomial():
+    """
+    Piece-wise polynomial.
 
-    print(pol.pol_at_t(2))
+    THis class represent a piece-wise polynomail where the used polynomial
+    to calculate the evaluation depends on time.
+
+    Parameters
+    ----------
+    pols : list of Polynomial classes
+        All the polynomials used.
+
+    time_setpoints: list of floats
+        The time points used to decide which polynomial to use
+
+    """
+
+    def __init__(self, pols: list, time_setpoints: list):
+        self.pols = pols
+        self.nOfPols = len(pols)
+        self.time_setpoints = np.zeros(self.nOfPols+1)
+
+        self.time_setpoints[1:] = time_setpoints
+
+        print("time_setpoints:", self.time_setpoints)
+
+    def eval(self, t):
+        assert t >= 0
+        # Evaluate resylt at time t.
+        for i in range(self.nOfPols):
+
+            tpr = self.time_setpoints[i]
+            tnxt = self.time_setpoints[i + 1] if i != self.nOfPols else np.inf
+
+            if t >= tpr and t < tnxt:
+                return self.pols[i].eval(t)
+
+
+if __name__ == "__main__":
+    # pol = Polynomial([1, 1, 1, 1, 1, 1, 1, 1])
+    # print(pol.pol_coeffs_at_t(2))
+
+    pols = []
+    pols.append(Polynomial([1, 0, ]))
+    pols.append(Polynomial([-1, 1, ]))
+
+    pc = PiecewisePolynomial(pols, time_setpoints=[1, 2])
+
+    print(pc.eval(t=0.8))
