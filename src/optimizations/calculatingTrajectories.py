@@ -59,6 +59,7 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
                 b[-4:] = tmp
 
         else:  # continuity constraints
+
             array_to_add = np.zeros((8, 8))
             for j in range(0, 8):
                 vec = np.array(pol.pol_coeffs_at_t(t))
@@ -86,13 +87,56 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
     polynomials_coefficients = np.linalg.solve(a=A, b=b)
 
     # print("polynomials_coefficients.shape:", polynomials_coefficients.shape)
-    # np.savetxt("A.csv", A, delimiter=",")
-    # np.savetxt("b.csv", b, delimiter=",")
+    np.savetxt("A.csv", A, delimiter=",")
+    np.savetxt("b.csv", b, delimiter=",")
 
     piece_pols = []  # piecewise polynomials
     for i in range(n):
         p = polynomials_coefficients[8*i:8*(i+1)]
         piece_pols.append(Polynomial(p))
+
+     # tests
+    for i, wp in enumerate(waypoints):
+        t = wp.t
+        print("i:", i)
+        if i >= len(waypoints)-2:
+            continue
+
+        if wp_type != Waypoint.WP_TYPE_X:
+            break
+        if i == 0:
+            print(f"pos at t={t} and pol={i}  -->{piece_pols[i].eval(t)}")
+            print(
+                f"vel at t={t} and pol={i}-->{piece_pols[i+0].derivative().eval(t)}")
+            print(
+                f"accel at t={t} and pol={i}-->{piece_pols[i+0].derivative().derivative().eval(t)}")
+
+            t = t+1
+            print(f"pos at t={t} and pol={i}  -->{piece_pols[i].eval(t)}")
+            print(f"pos at t={t} and pol={i+1}-->{piece_pols[i+1].eval(t)}")
+
+            print(
+                f"vel at t={t} and pol={i}-->{piece_pols[i+0].derivative().eval(t)}")
+            print(
+                f"vel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().eval(t)}")
+            print(
+                f"accel at t={t} and pol={i}-->{piece_pols[i+0].derivative().derivative().eval(t)}")
+            print(
+                f"accel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().derivative().eval(t)}")
+
+        else:
+            t = t+1
+            print(f"pos at t={t} and pol={i}  -->{piece_pols[i].eval(t)}")
+            print(f"pos at t={t} and pol={i+1}-->{piece_pols[i+1].eval(t)}")
+
+            print(
+                f"vel at t={t} and pol={i}-->{piece_pols[i+0].derivative().eval(t)}")
+            print(
+                f"vel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().eval(t)}")
+            print(
+                f"accel at t={t} and pol={i}-->{piece_pols[i+0].derivative().derivative().eval(t)}")
+            print(
+                f"accel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().derivative().eval(t)}")
 
     total_pol = PiecewisePolynomial(piece_pols, time_points)
 
@@ -145,11 +189,11 @@ if __name__ == "__main__":
     traj_points = []
 
     traj_points.append(Point_time(Waypoint(0.0, 0.0,  0.0, 0.0), t=0))
-    traj_points.append(Point_time(Waypoint(4.0, 1.0,  0.0, 0.0), t=2))
-    traj_points.append(Point_time(Waypoint(5.0, 2.0,  0.0, 0.0), t=3))
-    traj_points.append(Point_time(Waypoint(4.0, 3.0, 0.0, 0.0), t=4))
-    traj_points.append(Point_time(Waypoint(3.0, 3.0, 0.0, 0.0), t=6))
-    traj_points.append(Point_time(Waypoint(2.0, 3.0, 0.0, 0.0), t=8))
+    traj_points.append(Point_time(Waypoint(4.0, 1.0,  0.0, 0.0), t=1))
+    traj_points.append(Point_time(Waypoint(5.0, 2.0,  0.0, 0.0), t=2))
+    traj_points.append(Point_time(Waypoint(4.0, 3.0, 0.0, 0.0), t=3))
+    traj_points.append(Point_time(Waypoint(3.0, 3.0, 0.0, 0.0), t=4))
+    traj_points.append(Point_time(Waypoint(2.0, 3.0, 0.0, 0.0), t=5))
 
     calculate_trajectory4D(traj_points)
 
