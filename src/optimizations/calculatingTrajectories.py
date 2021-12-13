@@ -12,7 +12,6 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
 
     wp_type: specifies the type of waypoint (x,y,z or yaw)
 
-
     """
     # If m is the number of waypoints, n is the number of polynomials
     m = len(waypoints)
@@ -87,15 +86,15 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
     polynomials_coefficients = np.linalg.solve(a=A, b=b)
 
     # print("polynomials_coefficients.shape:", polynomials_coefficients.shape)
-    np.savetxt("A.csv", A, delimiter=",")
-    np.savetxt("b.csv", b, delimiter=",")
+    # np.savetxt("A.csv", A, delimiter=",")
+    # np.savetxt("b.csv", b, delimiter=",")
 
     piece_pols = []  # piecewise polynomials
     for i in range(n):
         p = polynomials_coefficients[8*i:8*(i+1)]
         piece_pols.append(Polynomial(p))
 
-     # tests
+    # tests
     for i, wp in enumerate(waypoints):
         t = wp.t
         print("i:", i)
@@ -154,10 +153,6 @@ def calculate_trajectory4D(waypoints):
     pols_coeffs = [polx, poly, polz, polyaw]
     pc_pols = [pc_polx, pc_poly, pc_polz, pc_polyaw]
 
-    t = 6
-    p = pc_poly
-    print(f" y pos at t={t} --> {p.eval(t)}")
-
     visualize_trajectory3D(pc_pols)
 
 
@@ -189,11 +184,10 @@ if __name__ == "__main__":
     traj_points = []
 
     traj_points.append(Point_time(Waypoint(0.0, 0.0,  0.0, 0.0), t=0))
-    traj_points.append(Point_time(Waypoint(4.0, 1.0,  0.0, 0.0), t=1))
-    traj_points.append(Point_time(Waypoint(5.0, 2.0,  0.0, 0.0), t=2))
-    traj_points.append(Point_time(Waypoint(4.0, 3.0, 0.0, 0.0), t=3))
-    traj_points.append(Point_time(Waypoint(3.0, 3.0, 0.0, 0.0), t=4))
-    traj_points.append(Point_time(Waypoint(2.0, 3.0, 0.0, 0.0), t=5))
+    traj_points.append(Point_time(Waypoint(2.0, 2.2,  0.3, 0.0), t=2))
+    traj_points.append(Point_time(Waypoint(4.0, 8.0,  0.8, 0.0), t=4))
+    traj_points.append(Point_time(Waypoint(0.0, 2.0, 0.4, 0.0), t=6))
+    traj_points.append(Point_time(Waypoint(0.0, 0.0, 0.0, 0.0), t=8))
 
     calculate_trajectory4D(traj_points)
 
