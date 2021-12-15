@@ -6,7 +6,7 @@ from trimesh.scene import Scene
 import os
 from geometry_msgs.msg import PoseStamped, Quaternion, Point
 import tf.transformations
-
+from frameTransforms import transform
 # print("Current working directory:", os.getcwd())
 
 
@@ -21,10 +21,19 @@ class SepCollisionChecking:
         self.coll_manager.add_object('robot', self.robot_mesh)
 
     def load_meshes(self):
-        robot_mesh = trimesh.load_mesh(
-            'ros_ws/src/drone_path_planning/resources/stl/robot-scene.stl')
-        env_mesh = trimesh.load_mesh(
-            'ros_ws/src/drone_path_planning/resources/stl/env-scene.stl')
+        try:
+            robot_mesh = trimesh.load_mesh(
+                'ros_ws/src/drone_path_planning/resources/stl/robot-scene.stl')
+            env_mesh = trimesh.load_mesh(
+                'ros_ws/src/drone_path_planning/resources/stl/env-scene.stl')
+        except Exception as e:
+            print("Error in loading meshes:", e)
+            print("Working directory:", os.getcwd())
+            print("Trying different path...")
+            robot_mesh = trimesh.load_mesh(
+                'crazyswarm/ros_ws/src/drone_path_planning/resources/stl/robot-scene.stl')
+            env_mesh = trimesh.load_mesh(
+                'crazyswarm/ros_ws/src/drone_path_planning/resources/stl/env-scene.stl')
 
         self.robot_mesh = robot_mesh
         self.env_mesh = env_mesh
@@ -57,14 +66,24 @@ class SepCollisionChecking:
         viewer = trimesh_viewer.SceneViewer(scene)
 
 
-if __name__ == "__main__":
-    checker = SepCollisionChecking()
-    q = tf.transformations.quaternion_from_euler(pi/2, 0, 0)
+# Checker initialization
+checker = SepCollisionChecking()
+pose = PoseStamped()
+pose.pose.position = Point(0, 0, 0)
+pose.pose.orientation = Quaternion(0, 0, 0, 1)
+transformed = transform(pose)
 
-    checker.set_robot_transform([0, 2, 0], [q[0], q[1], q[2], q[3]])
-    checker.set_env_transform([0, 0, 0], [0, 0, 0, 1])
+# q = tf.transformations.quaternion_from_euler(-pi/2, 0, 0)
+pos = transformed.pose.position
+q = transformed.pose.orientation
+
+# checker.set_env_transform([0, 2.19, 0], [q[0], q[1], q[2], q[3]])
+checker.set_env_transform([pos.x, pos.y, pos.z], [q.x, q.y, q.z, q.w])
+
+if __name__ == "__main__":
+    checker.set_robot_transform([2, 0, -2], [q[0], q[1], q[2], q[3]])
 
     # coll_manager.set_transform('robot', mat)
-    print("Check if collision:", checker.collision_check())
+    print("No collision:", not checker.collision_check())
 
     checker.visualize()

@@ -12,8 +12,10 @@ import os
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 from SE3RigidBodyPlanning_MARIOS import *
+from RB_planning_sep_coll_check import *
 import tf2_ros
 import tf2_geometry_msgs
+from frameTransforms import transform
 
 print("Current working directory:", os.getcwd())
 DRONES_NUMBER = 5
@@ -103,46 +105,10 @@ def getPath(data):
     return path
 
 
-def transform(pose_stamped, inverse=False) -> PoseStamped:
-    buffer_core = tf2_ros.BufferCore(rospy.Duration(10.0))
-
-    ts2 = TransformStamped()
-    ts2.header.stamp = rospy.Time(0)
-    ts2.header.frame_id = 'map'
-    ts2.child_frame_id = 'ompl_base'
-    ts2.transform.translation.x = 0
-    ts2.transform.translation.y = 0
-    ts2.transform.translation.z = 0
-
-    if inverse:
-        quat = tf.transformations.quaternion_from_euler(+math.pi/2, 0, 0)
-    else:
-        quat = tf.transformations.quaternion_from_euler(-math.pi/2, 0, 0)
-
-    ts2.transform.rotation.x = quat[0]
-    ts2.transform.rotation.y = quat[1]
-    ts2.transform.rotation.z = quat[2]
-    ts2.transform.rotation.w = quat[3]
-
-    buffer_core.set_transform(ts2, "default_authority")
-
-    pose_transformed = tf2_geometry_msgs.do_transform_pose(
-        pose_stamped, ts2)
-
-    # print("initilal pose")
-    # print(pose_stamped)
-    # print("pose_transformed")
-    # print(pose_transformed)
-
-    # pose_transformed.pose.orientation.x = pose_stamped.pose.orientation.x
-    # pose_transformed.pose.orientation.y = pose_stamped.pose.orientation.y
-    # pose_transformed.pose.orientation.z = pose_stamped.pose.orientation.z
-    # pose_transformed.pose.orientation.w = pose_stamped.pose.orientation.w
-    return pose_transformed
-
-
 def calculate_path():
-    planner = RBPlanner()
+    # planner = RBPlanner()
+
+    planner = PlannerSepCollision()
     start = [2, 2, 0]
     goal = [4, -2, 2]
 
@@ -150,7 +116,7 @@ def calculate_path():
     start_pose.pose.position.x = start[0]
     start_pose.pose.position.y = start[1]
     start_pose.pose.position.z = start[2]
-    q = tf.quaternion_from_euler(math.pi/2, 0, 0)  # Quaternion(0, 0, 0, 1)
+    q = [0, 0, 0, 1]  # tf.quaternion_from_euler(math.pi/2, 0, 0)
     start_pose.pose.orientation.x = q[0]
     start_pose.pose.orientation.y = q[1]
     start_pose.pose.orientation.z = q[2]
@@ -175,7 +141,7 @@ def calculate_path():
     planner.set_start_goal(start_pose_transformed.pose,
                            goal_pose_transformed.pose)
     planner.set_planner()
-    planner.solve(timeout=10.0)
+    planner.solve(timeout=20.0)
     # planner.visualize_path()
 
 
@@ -185,20 +151,29 @@ if __name__ == "__main__":
     # transform()
 
     # robot marker initialization
-    mesh = "package://drone_path_planning/resources/robot-scene.dae"
+    mesh = "package://drone_path_planning/resources/collada/robot-scene.dae"
     rb = MeshMarker(id=0, mesh_path=mesh)
     robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
 
     # Environment marker initialization
-    mesh = "package://drone_path_planning/resources/empty-scene.dae"
+    mesh = "package://drone_path_planning/resources/collada/env-scene.dae"
     env = MeshMarker(id=1, mesh_path=mesh)
+    env.updatePose([0, 0, 0], [0, 0, 0, 1])
     envPub = rospy.Publisher('rb_environment',  Marker, queue_size=10)
 
     # calculate path
     calculate_path()
 
     # path
-    data = np.loadtxt('path.txt')
+    try:
+        data = np.loadtxt('path.txt')
+    except Exception as e:
+        try:
+            data = np.loadtxt('crazyswarm/path.txt')
+        except Exception as e:
+            print("No path file found")
+            exit(0)
+
     path = getPath(data)
     trajPub = rospy.Publisher('rigiBodyPath',  Path, queue_size=10)
 
@@ -208,6 +183,7 @@ if __name__ == "__main__":
     i = 0
     rate = rospy.Rate(10.0)  # hz
     while not rospy.is_shutdown():
+        rospy.sleep(0.1)
         br.sendTransform((1, 0, 0), tf.transformations.quaternion_from_euler(-math.pi/2, 0, 0), rospy.Time.now(),
                          "world", "ompl")
 
@@ -221,23 +197,10 @@ if __name__ == "__main__":
         rb.updatePose(path.poses[i].pose.position,
                       q, frame="world")
 
-        # position = [2, 1, 0]
-        # quat = [0, 0, 0, 1]
-        # rb.updatePose(position, quat, frame="ompl")
+        rb_transformed = transform(rb)
 
-        # testing transforms
-        # pose = PoseStamped()
-        # pose.pose.position.x = 1
-        # pose.pose.position.y = 1
-        # pose.pose.position.z = 0
-        # pose.pose.orientation = Quaternion(0, 0, 0, 1)
-        # tfed = transform(pose)
-        # print("tfed:", tfed)
-        # untfed = transform(tfed,inverse=True)
-        # print("untfed:", untfed)
-
-        print("robot pos:", rb.pose.position.x,
-              rb.pose.position.y, rb.pose.position.z, " orient:", tf.euler_from_quaternion([rb.pose.orientation.x, rb.pose.orientation.y, rb.pose.orientation.z, rb.pose.orientation.w]))
+        print("robot pos:", rb_transformed.pose.position.x,
+              rb_transformed.pose.position.y, rb_transformed.pose.position.z, " orient:", rb_transformed.pose.orientation.x, rb_transformed.pose.orientation.y, rb_transformed.pose.orientation.z, rb_transformed.pose.orientation.w)
 
         robPub.publish(rb)
 
