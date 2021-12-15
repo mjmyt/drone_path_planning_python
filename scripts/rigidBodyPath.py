@@ -115,17 +115,15 @@ def calculate_path():
     start_pose.pose.position.x = start[0]
     start_pose.pose.position.y = start[1]
     start_pose.pose.position.z = start[2]
-    q = [0, 0, 0, 1]  # tf.quaternion_from_euler(math.pi/2, 0, 0)
-    start_pose.pose.orientation.x = q[0]
-    start_pose.pose.orientation.y = q[1]
-    start_pose.pose.orientation.z = q[2]
-    start_pose.pose.orientation.w = q[3]
+    q = tf.quaternion_from_euler(math.pi/2, 0, 0)
+    start_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
 
     goal_pose = PoseStamped()
     goal_pose.pose.position.x = goal[0]
     goal_pose.pose.position.y = goal[1]
     goal_pose.pose.position.z = goal[2]
-    goal_pose.pose.orientation = Quaternion(0, 0, 0, 1)
+    q = tf.quaternion_from_euler(math.pi/2, 0, 0)
+    goal_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
 
     start_pose_transformed = transform(start_pose)
     goal_pose_transformed = transform(goal_pose)

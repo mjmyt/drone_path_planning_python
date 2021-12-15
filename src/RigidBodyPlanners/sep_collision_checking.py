@@ -23,7 +23,7 @@ class SepCollisionChecking:
     def load_meshes(self):
         try:
             robot_mesh = trimesh.load_mesh(
-                'ros_ws/src/drone_path_planning/resources/stl/robot-scene.stl')
+                'ros_ws/src/drone_path_planning/resources/stl/robot-scene-safeScale.stl')
             env_mesh = trimesh.load_mesh(
                 'ros_ws/src/drone_path_planning/resources/stl/env-scene.stl')
         except Exception as e:

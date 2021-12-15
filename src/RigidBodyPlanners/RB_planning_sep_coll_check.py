@@ -34,19 +34,23 @@ class PlannerSepCollision:
         # set lower and upper bounds
         self.set_bounds()
 
-        # create a simple setup object
         self.ss = og.SimpleSetup(self.space)
+        # set State Validity Checker function
         self.ss.setStateValidityChecker(
             ob.StateValidityCheckerFn(isStateValid))
 
         self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.001)
+        # set problem optimization objective
+        self.set_optim_objective()
 
         print("Space Bounds High:", self.space.getBounds(
         ).high[0], self.space.getBounds().high[1], self.space.getBounds().high[2])
         print("Space Bounds Low:", self.space.getBounds(
         ).low[0], self.space.getBounds().low[1], self.space.getBounds().low[2])
 
-        # self.set_start_goal(self.space)
+    def set_optim_objective(self, objective_class=ob.MechanicalWorkOptimizationObjective):
+        self.ss.setOptimizationObjective(
+            objective_class(self.ss.getSpaceInformation()))
 
     def set_planner(self, planner_class=og.RRT):
         # choose planner
@@ -116,7 +120,7 @@ class PlannerSepCollision:
             self.ss.simplifySolution()
             # print the simplified path
             path = self.ss.getSolutionPath()
-            # path.interpolate(50)
+            path.interpolate(50)
 
             self.path = path
             self.save_path()
@@ -178,13 +182,22 @@ def isStateValid(state):
     max_angle = np.deg2rad(10)
 
     valid_rotation_arr = []
+    if isStateValid.counter == 0:
+        print("First state:")
+        print(np.rad2deg(euler))
+        # input()
+        isStateValid.counter += 1
+
     # valid_rotation_arr.append(isBetween(euler[0], -max_angle, max_angle))
+    valid_rotation_arr.append(isBetween(euler[0], -max_angle, max_angle))
     valid_rotation_arr.append(isBetween(euler[1], -max_angle, max_angle))
-    valid_rotation_arr.append(isBetween(euler[2], -max_angle, max_angle))
 
     valid_rotation = all(valid_rotation_arr)
     # print("             Valid Rotation:", valid_rotation)
     return no_collision and valid_rotation
+
+
+isStateValid.counter = 0
 
 
 def isBetween(x, min, max):
