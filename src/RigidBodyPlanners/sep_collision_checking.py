@@ -6,7 +6,7 @@ from trimesh.scene import Scene
 import os
 from geometry_msgs.msg import PoseStamped, Quaternion, Point
 import tf.transformations
-from frameTransforms import transform
+from .frameTransforms import transform
 # print("Current working directory:", os.getcwd())
 
 

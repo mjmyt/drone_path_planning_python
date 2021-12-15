@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from geometry_msgs.msg import Point, PoseStamped, Quaternion
 from math import pi
 import tf
-from sep_collision_checking import *
+from .sep_collision_checking import *
 from stl import mesh
 from mpl_toolkits import mplot3d
 

@@ -11,11 +11,10 @@ import tf
 import os
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
-from SE3RigidBodyPlanning_MARIOS import *
-from RB_planning_sep_coll_check import *
+from RigidBodyPlanners import *
 import tf2_ros
 import tf2_geometry_msgs
-from frameTransforms import transform
+
 
 print("Current working directory:", os.getcwd())
 DRONES_NUMBER = 5
