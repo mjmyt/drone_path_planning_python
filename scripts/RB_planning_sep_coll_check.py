@@ -16,7 +16,7 @@ except ImportError:
 
 
 from mpl_toolkits.mplot3d import Axes3D
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 from geometry_msgs.msg import Point, PoseStamped, Quaternion
 from math import pi
@@ -116,7 +116,7 @@ class PlannerSepCollision:
         # this will automatically choose a default planner with
         # default parameters
 
-        solved = self.ss.solve(5.0)
+        solved = self.ss.solve(15.0)
         if solved:
             print("Found solution...")
             # try to shorten the path
@@ -140,10 +140,40 @@ class PlannerSepCollision:
 
         checker.set_robot_transform(pos, q)
 
-        is_valid = not checker.collision_check()
-        # print("is_valid:", is_valid)
+        no_collision = not checker.collision_check()
 
-        return is_valid
+        euler = tf.euler_from_quaternion(q)
+
+        max_angle = pi/10  # 18 degrees
+
+        valid_rotation = isBetween(euler[0], -max_angle, max_angle)
+
+        return no_collision and valid_rotation
+
+    def visualize_path(self, path_file="path.txt"):
+        data = np.loadtxt(path_file)
+
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        ax.plot(data[:, 3], data[:, 2], data[:, 1], '.-')
+
+        # set axes limits
+        ax.set_xlim3d(-5, 7.22)
+        ax.set_ylim3d(-3, 3.84)
+        ax.set_zlim3d(-0.5, 2)
+
+        ax.set_xlabel('X axis')
+        ax.set_ylabel('Y axis')
+        ax.set_zlabel('Z axis')
+
+        # printCoords(ax, data[0, 1], data[0, 2], data[0, 3])
+        # printCoords(ax, data[-1, 1], data[-1, 2], data[-1, 3])
+
+        plt.show()
+
+
+def isBetween(x, min, max):
+    return x >= min and x <= max
 
 
 """
@@ -202,3 +232,4 @@ if __name__ == "__main__":
     goal = [4, -2, 2]
     planner.set_start_goal(start, goal)
     planner.plan()
+    # planner.visualize_path()
