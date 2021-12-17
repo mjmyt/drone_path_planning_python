@@ -56,7 +56,6 @@ class MeshMarker(Marker):
             self.pose.orientation.z = quatern[2]
             self.pose.orientation.w = quatern[3]
         except:
-            print("Error in updatePose")
             self.pose.position = pos
             self.pose.orientation = quatern
 
@@ -150,16 +149,20 @@ if __name__ == "__main__":
     # robot marker initialization
     mesh = "package://drone_path_planning/resources/collada/robot-scene.dae"
     rb = MeshMarker(id=0, mesh_path=mesh)
+
     robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
 
     # Environment marker initialization
     mesh = "package://drone_path_planning/resources/collada/env-scene.dae"
     env = MeshMarker(id=1, mesh_path=mesh)
+    env.color.r = 1
+    env.color.g = 0
+    env.color.b = 0
     env.updatePose([0, 0, 0], [0, 0, 0, 1])
     envPub = rospy.Publisher('rb_environment',  Marker, queue_size=10)
 
     # calculate path
-    # calculate_path()
+    calculate_path()
 
     # path
     try:
@@ -196,8 +199,8 @@ if __name__ == "__main__":
 
         rb_transformed = transform(rb)
 
-        print("robot pos:", rb_transformed.pose.position.x,
-              rb_transformed.pose.position.y, rb_transformed.pose.position.z, " orient:", rb_transformed.pose.orientation.x, rb_transformed.pose.orientation.y, rb_transformed.pose.orientation.z, rb_transformed.pose.orientation.w)
+        # print("robot pos:", rb_transformed.pose.position.x,
+        #   rb_transformed.pose.position.y, rb_transformed.pose.position.z, " orient:", rb_transformed.pose.orientation.x, rb_transformed.pose.orientation.y, rb_transformed.pose.orientation.z, rb_transformed.pose.orientation.w)
 
         robPub.publish(rb)
 

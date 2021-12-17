@@ -39,7 +39,7 @@ class PlannerSepCollision:
         self.ss.setStateValidityChecker(
             ob.StateValidityCheckerFn(isStateValid))
 
-        self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.0001)
+        self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.001)
         # set problem optimization objective
         self.set_optim_objective()
 
