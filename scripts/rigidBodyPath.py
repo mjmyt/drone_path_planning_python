@@ -181,7 +181,7 @@ if __name__ == "__main__":
     rate = rospy.Rate(10.0)  # hz
     while not rospy.is_shutdown():
         rospy.sleep(0.1)
-        br.sendTransform((1, 0, 0), tf.transformations.quaternion_from_euler(-math.pi/2, 0, 0), rospy.Time.now(),
+        br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(-math.pi/2, 0, 0), rospy.Time.now(),
                          "world", "ompl")
 
         if i == data.shape[0]-1:
