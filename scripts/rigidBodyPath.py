@@ -159,7 +159,7 @@ if __name__ == "__main__":
     envPub = rospy.Publisher('rb_environment',  Marker, queue_size=10)
 
     # calculate path
-    calculate_path()
+    # calculate_path()
 
     # path
     try:
@@ -200,6 +200,13 @@ if __name__ == "__main__":
               rb_transformed.pose.position.y, rb_transformed.pose.position.z, " orient:", rb_transformed.pose.orientation.x, rb_transformed.pose.orientation.y, rb_transformed.pose.orientation.z, rb_transformed.pose.orientation.w)
 
         robPub.publish(rb)
+
+        pos = (rb.pose.position.x, rb.pose.position.y, rb.pose.position.z)
+        orientation = (rb.pose.orientation.x, rb.pose.orientation.y,
+                       rb.pose.orientation.z, rb.pose.orientation.w)
+
+        br.sendTransform(pos, orientation, rospy.Time.now(),
+                         "rigid_body", "world")
 
         envPub.publish(env)
         trajPub.publish(path)
