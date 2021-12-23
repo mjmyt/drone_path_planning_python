@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <node name="drones_vis_on_rb" pkg="drone_path_planning" type="drones_vis.py" />
+
+  <node name="droneMarkerVis" pkg="3Dvisualization" type="droneMarkerVisMarios.py" />
+
+</launch>
