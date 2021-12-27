@@ -108,7 +108,7 @@ def calculate_path():
 
     planner = PlannerSepCollision()
     start = [2, 2, 0]
-    goal = [4, -2, 2]
+    goal = [4, -4, 0]
 
     start_pose = PoseStamped()
     start_pose.pose.position.x = start[0]

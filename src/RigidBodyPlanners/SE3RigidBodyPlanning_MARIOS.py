@@ -189,7 +189,7 @@ class RBPlanner():
 def isStateValid(spaceInformation, state):
     # perform collision checking or check if other constraints are
     # satisfied
-    print("mlkia")
+    print("checking state validity...")
     return spaceInformation.satisfiesBounds(state) and state.getX() > 0.5
 
 
