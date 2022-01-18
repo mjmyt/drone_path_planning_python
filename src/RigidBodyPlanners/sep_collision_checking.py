@@ -6,7 +6,11 @@ from trimesh.scene import Scene
 import os
 from geometry_msgs.msg import PoseStamped, Quaternion, Point
 import tf.transformations
-from .frameTransforms import transform
+
+try:
+    from .frameTransforms import transform
+except:
+    from frameTransforms import transform
 # print("Current working directory:", os.getcwd())
 
 
@@ -25,15 +29,15 @@ class SepCollisionChecking:
             robot_mesh = trimesh.load_mesh(
                 'ros_ws/src/drone_path_planning/resources/stl/robot-scene-safeScale.stl')
             env_mesh = trimesh.load_mesh(
-                'ros_ws/src/drone_path_planning/resources/stl/env-scene.stl')
+                'ros_ws/src/drone_path_planning/resources/stl/env-scene-narrow.stl')
         except Exception as e:
             print("Error in loading meshes:", e)
             print("Working directory:", os.getcwd())
             print("Trying different path...")
             robot_mesh = trimesh.load_mesh(
-                'crazyswarm/ros_ws/src/drone_path_planning/resources/stl/robot-scene.stl')
+                'crazyswarm/ros_ws/src/drone_path_planning/resources/stl/robot-scene-safeScale.stl')
             env_mesh = trimesh.load_mesh(
-                'crazyswarm/ros_ws/src/drone_path_planning/resources/stl/env-scene.stl')
+                'crazyswarm/ros_ws/src/drone_path_planning/resources/stl/env-scene-narrow.stl')
 
         self.robot_mesh = robot_mesh
         self.env_mesh = env_mesh
