@@ -1,10 +1,11 @@
+from math import pi
 from matplotlib import pyplot as plt
 from mpl_toolkits import mplot3d
 import fcl
 import numpy as np
 from simplejson import load
 from stl import mesh
-
+import tf.transformations
 import os
 print(os.getcwd())
 
@@ -44,11 +45,16 @@ class Fcl_mesh():
         m.endModel()
 
         T = t = fcl.Transform()
+        self.m = m
         self.collision_object = fcl.CollisionObject(m, T)
+
         return m
 
     def set_transform(self, T=[0, 0, 0], q=[0, 0, 0, 1]):
+
+        q = [q[3], q[0], q[1], q[2]]  # from XYZW to WXYZ
         tf = fcl.Transform(q, T)
+
         self.collision_object.setTransform(tf)
 
 
@@ -90,6 +96,9 @@ class Fcl_checker():
 
         return is_collision
 
+    def set_robot_transform(self, T, q=[0, 0, 0, 1]):
+        self.robot.set_transform(T, q)
+
 
 if __name__ == '__main__':
     # # environment
@@ -109,7 +118,15 @@ if __name__ == '__main__':
     # ret = fcl.collide(env.collision_object, robot.collision_object, request, result)
     # print(ret)
 
-    env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-narrow.stl"
+    env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
     robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene.stl"
+
     coll_checker = Fcl_checker(env_mesh_name, robot_mesh_name)
+    q = tf.transformations.quaternion_from_euler(-pi/2, 0, 0)
+    print(q)
+
+    coll_checker.set_robot_transform([-1.21917, -0.441611, -0.0462389], [-0.298798, 0.00548747, 0.0160421, 0.954166])
+
     print(coll_checker.check_collision())
+    # print(dir(coll_checker.robot.m))
+    visualize_meshes([env_mesh_name, robot_mesh_name])
