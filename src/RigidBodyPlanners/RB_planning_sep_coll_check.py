@@ -61,13 +61,13 @@ class PlannerSepCollision:
 
     def set_bounds(self):
         bounds = ob.RealVectorBounds(3)
-        bounds.low[0] = -6.0
-        bounds.low[1] = -6.0
-        bounds.low[2] = -4
+        bounds.low[0] = -4.09
+        bounds.low[1] = -2.2
+        bounds.low[2] = -6
 
-        bounds.high[0] = 8
-        bounds.high[1] = 8
-        bounds.high[2] = 10
+        bounds.high[0] = 4.09
+        bounds.high[1] = 2.2
+        bounds.high[2] = 6
 
         # bounds.setLow(-10)
         # bounds.setHigh(10)

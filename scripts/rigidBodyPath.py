@@ -15,6 +15,8 @@ from RigidBodyPlanners import *
 import tf2_ros
 import tf2_geometry_msgs
 
+from ompl import base as ob
+from ompl import geometric as og
 
 print("Current working directory:", os.getcwd())
 DRONES_NUMBER = 5
@@ -107,8 +109,8 @@ def calculate_path():
     # planner = RBPlanner()
 
     planner = PlannerSepCollision()
-    start = [2, 2, 0]
-    goal = [4, -2, 2]
+    start = [2, -4, 0]
+    goal = [2, 5, 0]
 
     start_pose = PoseStamped()
     start_pose.pose.position.x = start[0]
@@ -137,6 +139,8 @@ def calculate_path():
     planner.set_start_goal(start_pose_transformed.pose,
                            goal_pose_transformed.pose)
     planner.set_planner()
+    # planner.set_planner(og.FMT)
+
     planner.solve(timeout=20.0)
     # planner.visualize_path()
 
@@ -153,7 +157,7 @@ if __name__ == "__main__":
     robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
 
     # Environment marker initialization
-    mesh = "package://drone_path_planning/resources/collada/env-scene.dae"
+    mesh = "package://drone_path_planning/resources/collada/env-scene-narrow.dae"
     env = MeshMarker(id=1, mesh_path=mesh)
     env.color.r = 1
     env.color.g = 0
