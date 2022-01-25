@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Author: Mark Moll
+from click import echo_via_pager
 from stl import mesh
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits import mplot3d
@@ -168,12 +169,12 @@ class PlannerSepCollision:
         plt.show()
 
 
-env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-narrow.stl"
-robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene.stl"
+env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
+robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
 try:
     checker = Fcl_checker(env_mesh_name, robot_mesh_name)
 except:
-    prefix = '/home/marios/crazyswarm/'
+    prefix = "crazyswarm/"
     checker = Fcl_checker(prefix+env_mesh_name, prefix + robot_mesh_name)
 
 

@@ -61,17 +61,6 @@ class MeshMarker(Marker):
             self.pose.position = pos
             self.pose.orientation = quatern
 
-        # if frame == "ompl":
-        #     pose_stamped = transform(self, inverse=True)
-        #     self.pose.position.x = pose_stamped.pose.position.x
-        #     self.pose.position.y = pose_stamped.pose.position.y
-        #     self.pose.position.z = pose_stamped.pose.position.z
-
-        #     self.pose.orientation.x = pose_stamped.pose.orientation.x
-        #     self.pose.orientation.y = pose_stamped.pose.orientation.y
-        #     self.pose.orientation.z = pose_stamped.pose.orientation.z
-        #     self.pose.orientation.w = pose_stamped.pose.orientation.w
-
 
 def getPath(data):
     path = Path()
@@ -184,13 +173,13 @@ if __name__ == "__main__":
     # transform()
 
     # robot marker initialization
-    mesh = "package://drone_path_planning/resources/collada/robot-scene.dae"
+    mesh = "package://drone_path_planning/resources/collada/robot-scene-triangle.dae"
     rb = MeshMarker(id=0, mesh_path=mesh)
 
     robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
 
     # Environment marker initialization
-    mesh = "package://drone_path_planning/resources/collada/env-scene-narrow.dae"
+    mesh = "package://drone_path_planning/resources/collada/env-scene-hole.dae"
     env = MeshMarker(id=1, mesh_path=mesh)
     env.color.r = 1
     env.color.g = 0
