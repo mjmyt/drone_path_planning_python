@@ -204,6 +204,7 @@ if __name__ == "__main__":
 
     path = getPath(data)
     trajPub = rospy.Publisher('rigiBodyPath',  Path, queue_size=10)
+    trajPub.publish(path)
 
     # transform
     br = tf.TransformBroadcaster()

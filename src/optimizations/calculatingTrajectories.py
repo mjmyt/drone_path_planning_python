@@ -1,9 +1,34 @@
 # Useful link :https://realpython.com/linear-programming-python/
 import numpy as np
 from numpy.core.function_base import linspace
-from uav_trajectory import *
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from sympy import primitive
+
+try:
+    from uav_trajectory import *
+except:
+    from .uav_trajectory import *
+
+#################################POL GENERATOR OVERVIEW#######################################
+"""
+A 7th rank polynomial is used (t^7)
+
+First wp(waipont) conditions:
+    x(0) = waypoint(0)
+    x'(0) = x''(0)=x'''(0)= 0
+
+i-th waypoint conditions:
+    x_i-1(ti)    =  waypoint(i) 
+    x_i-1'(ti)   =  x_i'(ti)
+    x_i-1''(ti)  =  x_i''(ti)
+    x_i-1'''(ti) =  x_i'''(ti)
+    x_i-1(4)(ti) =  x_i(4)(ti)
+    x_i-1(5)(ti) =  x_i(5)(ti)
+    x_i-1(6)(ti) =  x_i(6)(ti)
+
+"""
+##############################################################################################
 
 
 def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
@@ -43,7 +68,7 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
                     A[j, 8*i:8*(i+1)] = arr
                 else:
                     ind = -(4-j)
-                    if ind == 0:
+                    if ind >= 0:
                         continue
 
                     A[ind, 8*(i-1):8*(i)] = arr
@@ -83,11 +108,15 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
             b[endl] = wp
             b[endl+1] = wp
 
+            np.set_printoptions(suppress=True)
+            # print(startl, endl)
+            # print(array_to_add)
+
     polynomials_coefficients = np.linalg.solve(a=A, b=b)
 
     # print("polynomials_coefficients.shape:", polynomials_coefficients.shape)
-    # np.savetxt("A.csv", A, delimiter=",")
-    # np.savetxt("b.csv", b, delimiter=",")
+    np.savetxt("A.csv", A, delimiter=",")
+    np.savetxt("b.csv", b, delimiter=",")
 
     piece_pols = []  # piecewise polynomials
     for i in range(n):
@@ -95,49 +124,54 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
         piece_pols.append(Polynomial(p))
 
     # tests
-    for i, wp in enumerate(waypoints):
-        t = wp.t
-        print("i:", i)
-        if i >= len(waypoints)-2:
-            continue
+    DEBUG = 1
+    if DEBUG:
+        for i, wp in enumerate(waypoints):
+            t = wp.t
+            print("i:", i)
+            if i >= len(waypoints)-2:
+                continue
 
-        if wp_type != Waypoint.WP_TYPE_X:
-            break
-        if i == 0:
-            print(f"pos at t={t} and pol={i}  -->{piece_pols[i].eval(t)}")
-            print(
-                f"vel at t={t} and pol={i}-->{piece_pols[i+0].derivative().eval(t)}")
-            print(
-                f"accel at t={t} and pol={i}-->{piece_pols[i+0].derivative().derivative().eval(t)}")
+            if wp_type != Waypoint.WP_TYPE_X:
+                break
+            if i == 0:
+                print(f"pos at t={t} and pol={i}  -->{piece_pols[i].eval(t)}")
+                print(
+                    f"vel at t={t} and pol={i}-->{piece_pols[i+0].derivative().eval(t)}")
+                print(
+                    f"accel at t={t} and pol={i}-->{piece_pols[i+0].derivative().derivative().eval(t)}")
 
-            t = t+1
-            print(f"pos at t={t} and pol={i}  -->{piece_pols[i].eval(t)}")
-            print(f"pos at t={t} and pol={i+1}-->{piece_pols[i+1].eval(t)}")
+                t = waypoints[i+1].t
+                print(f"pos at t={t} and pol={i}  -->{piece_pols[i].eval(t)}")
+                print(f"pos at t={t} and pol={i+1}-->{piece_pols[i+1].eval(t)}")
 
-            print(
-                f"vel at t={t} and pol={i}-->{piece_pols[i+0].derivative().eval(t)}")
-            print(
-                f"vel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().eval(t)}")
-            print(
-                f"accel at t={t} and pol={i}-->{piece_pols[i+0].derivative().derivative().eval(t)}")
-            print(
-                f"accel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().derivative().eval(t)}")
+                print(
+                    f"vel at t={t} and pol={i}-->{piece_pols[i+0].derivative().eval(t)}")
+                print(
+                    f"vel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().eval(t)}")
+                print(
+                    f"accel at t={t} and pol={i}-->{piece_pols[i+0].derivative().derivative().eval(t)}")
+                print(
+                    f"accel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().derivative().eval(t)}")
 
-        else:
-            t = t+1
-            print(f"pos at t={t} and pol={i}  -->{piece_pols[i].eval(t)}")
-            print(f"pos at t={t} and pol={i+1}-->{piece_pols[i+1].eval(t)}")
+            else:
+                t = waypoints[i+1].t
+                print(f"pos at t={t} and pol={i}  -->{piece_pols[i].eval(t)}")
+                print(f"pos at t={t} and pol={i+1}-->{piece_pols[i+1].eval(t)}")
 
-            print(
-                f"vel at t={t} and pol={i}-->{piece_pols[i+0].derivative().eval(t)}")
-            print(
-                f"vel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().eval(t)}")
-            print(
-                f"accel at t={t} and pol={i}-->{piece_pols[i+0].derivative().derivative().eval(t)}")
-            print(
-                f"accel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().derivative().eval(t)}")
+                print(
+                    f"vel at t={t} and pol={i}-->{piece_pols[i+0].derivative().eval(t)}")
+                print(
+                    f"vel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().eval(t)}")
+                print(
+                    f"accel at t={t} and pol={i}-->{piece_pols[i+0].derivative().derivative().eval(t)}")
+                print(
+                    f"accel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().derivative().eval(t)}")
 
     total_pol = PiecewisePolynomial(piece_pols, time_points)
+
+    # for pol in piece_pols:
+    #     print(pol.p)
 
     return piece_pols, total_pol
 
@@ -180,16 +214,41 @@ def visualize_trajectory3D(pols):
     plt.show()
 
 
+timestep = 100/50
+test_data = [
+    [-1.0, 5.0, 1.0, 0.0],
+    [-0.9105214656082087, 4.866527813557898, 0.9821609406403813, 0.02039080103534039],
+    [-0.8225743363589189, 4.73288554489947, 0.964441662764501, 0.04077309721300639],
+    [-0.7361272257466368, 4.5990008095166175, 0.946841139664208, 0.06113820463325185],
+    [-0.6511925243577015, 4.464831726680945, 0.9293520786300249, 0.08147761001670759],
+    [-0.5677385453806084, 4.3303072795034305, 0.9119680575644483, 0.10178299225536093],
+    [-0.4857652247831987, 4.19536539455793, 0.8946893929748612, 0.12204500119949559],
+    [-0.40523866600088, 4.05994725771634, 0.8775065705250998, 0.14225598708544368],
+    [-0.3261547497876769, 3.923993481128284, 0.8604168009043632, 0.16240701194973708],
+    [-0.2484752985307498, 3.78743548705188, 0.84341227981323, 0.1824899882345422],
+    [-0.17219220053404993, 3.6502373470789204, 0.8264894614074699, 0.20249698043707148],
+    [-0.09725801527295008, 3.51232995673728, 0.8096428181876703, 0.22241799607297275],
+    [-0.02365621826047004, 3.37365871553904, 0.7928635266349502, 0.24224499181234838],
+    [0.04864606691479989, 3.23417214717458, 0.7761488620638199, 0.2619709834334211],
+    [0.11968750758167002, 3.0938169790745595, 0.75949244060815, 0.2815870183901405],
+    [0.18949994071968002, 2.95253000758626, 0.7428843320283001, 0.3010839819518382],
+    [0.2581249596866899, 2.8102848216266, 0.72632388402931, 0.32045501331803433],
+    [0.32560330474396, 2.667021932848, 0.70980157478244, 0.3396910397023212]]
+
 if __name__ == "__main__":
     traj_points = []
 
-    traj_points.append(Point_time(Waypoint(0.0, 0.0,  0.0, 0.0), t=0))
-    traj_points.append(Point_time(Waypoint(2.0, 2.2,  0.3, 0.0), t=2))
-    traj_points.append(Point_time(Waypoint(4.0, 8.0,  0.8, 0.0), t=4))
-    traj_points.append(Point_time(Waypoint(0.0, 2.0, 0.4, 0.0), t=6))
-    traj_points.append(Point_time(Waypoint(0.0, 0.0, 0.0, 0.0), t=8))
+    # traj_points.append(Point_time(Waypoint(0.0, 0.0,  0.0, 0.0), t=0))
+    # traj_points.append(Point_time(Waypoint(2.0, 2.2,  0.3, 0.0), t=1))
+    # traj_points.append(Point_time(Waypoint(4.0, 8.0,  0.8, 0.0), t=2))
+    # traj_points.append(Point_time(Waypoint(0.0, 2.0, 0.4, 0.0), t=3))
+    # traj_points.append(Point_time(Waypoint(0.0, 0.0, 0.0, 0.0), t=4))
 
-    calculate_trajectory4D(traj_points)
+    for i, point in enumerate(test_data):
+        traj_points.append(Point_time(Waypoint(point[0], point[1], point[2], point[3]), t=i*timestep))
+
+    calculate_trajectory1D(traj_points, Waypoint.WP_TYPE_X)
+    # calculate_trajectory4D(traj_points)
 
     # t = np.linspace(0, 5, 100)
     # y = [pol.eval(i) for i in t]
