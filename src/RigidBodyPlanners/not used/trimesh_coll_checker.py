@@ -85,7 +85,7 @@ q = transformed.pose.orientation
 checker.set_env_transform([pos.x, pos.y, pos.z], [q.x, q.y, q.z, q.w])
 
 if __name__ == "__main__":
-    checker.set_robot_transform([2, 0, -2], [q[0], q[1], q[2], q[3]])
+    checker.set_robot_transform([2, 0, -2], [q.x, q.y, q.z, q.w])
 
     # coll_manager.set_transform('robot', mat)
     print("No collision:", not checker.collision_check())

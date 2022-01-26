@@ -3,6 +3,8 @@
   
   <node name="drones_vis_on_rb" pkg="drone_path_planning" type="drones_vis.py" />
 
+  <node name="rb_path_listener" pkg="drone_path_planning" type="drones_traj_generator.py" />
+  
   <node name="droneMarkerVis" pkg="3Dvisualization" type="droneMarkerVisMarios.py" />
 
 </launch>

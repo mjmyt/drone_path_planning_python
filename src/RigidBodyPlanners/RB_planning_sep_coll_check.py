@@ -1,35 +1,41 @@
 #!/usr/bin/env python
 
 # Author: Mark Moll
+from click import echo_via_pager
+from stl import mesh
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits import mplot3d
+from geometry_msgs.msg import Point, PoseStamped, Quaternion
+import tf
+import numpy as np
+import matplotlib.pyplot as plt
+from math import pi
+
 try:
     from ompl import base as ob
     from ompl import geometric as og
 except ImportError:
     # if the ompl module is not in the PYTHONPATH assume it is installed in a
     # subdirectory of the parent directory called "py-bindings."
-    from os.path import abspath, dirname, join
     import sys
+    from os.path import abspath, dirname, join
     sys.path.insert(
         0, join(dirname(dirname(abspath(__file__))), 'py-bindings'))
     from ompl import base as ob
     from ompl import geometric as og
 
+try:
+    from .fcl_checker import Fcl_checker
+except ImportError:
+    from fcl_checker import Fcl_checker
 
-from mpl_toolkits.mplot3d import Axes3D
-import numpy as np
-import matplotlib.pyplot as plt
-from geometry_msgs.msg import Point, PoseStamped, Quaternion
-from math import pi
-import tf
-from .sep_collision_checking import *
-from stl import mesh
-from mpl_toolkits import mplot3d
+import os
+
+print("cwd:", os.getcwd())
 
 
 class PlannerSepCollision:
     def __init__(self) -> None:
-        self.coll_checker = checker
-
         self.space = ob.SE3StateSpace()
         # set lower and upper bounds
         self.set_bounds()
@@ -62,12 +68,12 @@ class PlannerSepCollision:
     def set_bounds(self):
         bounds = ob.RealVectorBounds(3)
         bounds.low[0] = -4.09
-        bounds.low[1] = -2.2
-        bounds.low[2] = -6
+        bounds.low[1] = -6
+        bounds.low[2] = -2.2
 
         bounds.high[0] = 4.09
-        bounds.high[1] = 2.2
-        bounds.high[2] = 6
+        bounds.high[1] = 6
+        bounds.high[2] = 2.2
 
         # bounds.setLow(-10)
         # bounds.setHigh(10)
@@ -140,8 +146,7 @@ class PlannerSepCollision:
         ax.plot(data[:, 3], data[:, 2], data[:, 1], '.-')
 
         # Load the STL files and add the vectors to the plot
-        env_mesh = mesh.Mesh.from_file(
-            'ros_ws/src/drone_path_planning/resources/stl/env-scene.stl')
+        env_mesh = mesh.Mesh.from_file(env_mesh_name)
 
         ax.add_collection3d(mplot3d.art3d.Poly3DCollection(env_mesh.vectors))
 
@@ -164,6 +169,15 @@ class PlannerSepCollision:
         plt.show()
 
 
+env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
+robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
+try:
+    checker = Fcl_checker(env_mesh_name, robot_mesh_name)
+except:
+    prefix = "crazyswarm/"
+    checker = Fcl_checker(prefix+env_mesh_name, prefix + robot_mesh_name)
+
+
 def isStateValid(state):
     # Some arbitrary condition on the state (note that thanks to
     # dynamic type checking we can just call getX() and do not need
@@ -173,8 +187,8 @@ def isStateValid(state):
          state.rotation().z, state.rotation().w]
 
     checker.set_robot_transform(pos, q)
-
-    no_collision = not checker.collision_check()
+    no_collision = not checker.check_collision()
+    # print("No collision:", no_collision)
 
     euler = tf.euler_from_quaternion(q)
     # print("Euler:", euler[0], euler[1], euler[2])
@@ -188,9 +202,9 @@ def isStateValid(state):
         # input()
         isStateValid.counter += 1
 
-    # valid_rotation_arr.append(isBetween(euler[0], -max_angle, max_angle))
     valid_rotation_arr.append(isBetween(euler[0], -max_angle, max_angle))
     valid_rotation_arr.append(isBetween(euler[1], -max_angle, max_angle))
+    # valid_rotation_arr.append(isBetween(euler[2], -max_angle, max_angle))
 
     valid_rotation = all(valid_rotation_arr)
     # print("             Valid Rotation:", valid_rotation)
@@ -208,22 +222,20 @@ if __name__ == "__main__":
     # checker.visualize()
     planner = PlannerSepCollision()
 
-    start_pos = [2, 0, -2]
+    start_pos = [-4, -2, 2]
     goal_pos = [4, 2, 2]
 
     # start
     start_pose = PoseStamped()
     start_pose.pose.position = Point(start_pos[0], start_pos[1], start_pos[2])
-    start_pose.pose.orientation = Quaternion(
-        -0.7071067811865475, 0, 0, 0.7071067811865476)
-    # start_pose.pose.orientation = Quaternion(0, 0, 0, 1)
+    # start_pose.pose.orientation = Quaternion(-0.7071067811865475, 0, 0, 0.7071067811865476)
+    start_pose.pose.orientation = Quaternion(0, 0, 0, 1)
 
     # goal
     goal_pose = PoseStamped()
     goal_pose.pose.position = Point(goal_pos[0], goal_pos[1], goal_pos[2])
-    # goal_pose.pose.orientation = Quaternion(0, 0, 0, 1)
-    goal_pose.pose.orientation = Quaternion(
-        -0.7071067811865475, 0, 0, 0.7071067811865476)
+    goal_pose.pose.orientation = Quaternion(0, 0, 0, 1)
+    # goal_pose.pose.orientation = Quaternion(-0.7071067811865475, 0, 0, 0.7071067811865476)
 
     # if transform:
     #     start_pose = transform(start_pose)

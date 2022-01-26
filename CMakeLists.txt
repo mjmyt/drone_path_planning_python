@@ -196,6 +196,8 @@ include_directories(
 install(PROGRAMS
   scripts/path_vis.py
   scripts/rigidBodyPath.py
+  scripts/drones_traj_generator.py
+  scripts/drones_pols_generator.py
   
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

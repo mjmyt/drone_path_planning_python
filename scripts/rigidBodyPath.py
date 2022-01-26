@@ -61,17 +61,6 @@ class MeshMarker(Marker):
             self.pose.position = pos
             self.pose.orientation = quatern
 
-        # if frame == "ompl":
-        #     pose_stamped = transform(self, inverse=True)
-        #     self.pose.position.x = pose_stamped.pose.position.x
-        #     self.pose.position.y = pose_stamped.pose.position.y
-        #     self.pose.position.z = pose_stamped.pose.position.z
-
-        #     self.pose.orientation.x = pose_stamped.pose.orientation.x
-        #     self.pose.orientation.y = pose_stamped.pose.orientation.y
-        #     self.pose.orientation.z = pose_stamped.pose.orientation.z
-        #     self.pose.orientation.w = pose_stamped.pose.orientation.w
-
 
 def getPath(data):
     path = Path()
@@ -93,14 +82,14 @@ def getPath(data):
         pose.pose.orientation.z = data[i, 5]
         pose.pose.orientation.w = data[i, 6]
 
-        transformed_pose = transform(pose,  inverse=True)
+        # transformed_pose = transform(pose,  inverse=True)
+#
+        # pose.pose.orientation.x = data[i, 3]
+        # pose.pose.orientation.y = data[i, 4]
+        # pose.pose.orientation.z = data[i, 5]
+        # pose.pose.orientation.w = data[i, 6]
 
-        pose.pose.orientation.x = data[i, 3]
-        pose.pose.orientation.y = data[i, 4]
-        pose.pose.orientation.z = data[i, 5]
-        pose.pose.orientation.w = data[i, 6]
-
-        path.poses.append(transformed_pose)
+        path.poses.append(pose)
 
     return path
 
@@ -145,19 +134,52 @@ def calculate_path():
     # planner.visualize_path()
 
 
+def calculate_path_FCL():
+    # planner = RBPlanner()
+
+    planner = PlannerSepCollision()
+
+    start = [-2, 5, 0]
+    goal = [2, -3, 0]
+
+    start_pose = PoseStamped()
+    start_pose.pose.position.x, start_pose.pose.position.y, start_pose.pose.position.z = start
+    q = tf.quaternion_from_euler(0, 0, 0)
+    start_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
+
+    goal_pose = PoseStamped()
+    goal_pose.pose.position.x, goal_pose.pose.position.y, goal_pose.pose.position.z = goal
+    q = tf.quaternion_from_euler(0, 0, 0)
+    goal_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
+
+    print("==============================")
+    print("START POSE:")
+    print(start_pose)
+    print("==============================")
+    print("GOAL POSE:")
+    print(goal_pose)
+    print("==============================")
+    planner.set_start_goal(start_pose.pose, goal_pose.pose)
+    planner.set_planner()
+    # planner.set_planner(og.FMT)
+
+    planner.solve(timeout=40.0)
+    # planner.visualize_path()
+
+
 if __name__ == "__main__":
 
     rospy.init_node("rb_path_planning", anonymous=True)
     # transform()
 
     # robot marker initialization
-    mesh = "package://drone_path_planning/resources/collada/robot-scene.dae"
+    mesh = "package://drone_path_planning/resources/collada/robot-scene-triangle.dae"
     rb = MeshMarker(id=0, mesh_path=mesh)
 
     robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
 
     # Environment marker initialization
-    mesh = "package://drone_path_planning/resources/collada/env-scene-narrow.dae"
+    mesh = "package://drone_path_planning/resources/collada/env-scene-hole.dae"
     env = MeshMarker(id=1, mesh_path=mesh)
     env.color.r = 1
     env.color.g = 0
@@ -166,7 +188,9 @@ if __name__ == "__main__":
     envPub = rospy.Publisher('rb_environment',  Marker, queue_size=10)
 
     # calculate path
-    calculate_path()
+    print("Calculating path...")
+    # calculate_path()
+    calculate_path_FCL()
 
     # path
     try:
@@ -180,6 +204,7 @@ if __name__ == "__main__":
 
     path = getPath(data)
     trajPub = rospy.Publisher('rigiBodyPath',  Path, queue_size=10)
+    trajPub.publish(path)
 
     # transform
     br = tf.TransformBroadcaster()
@@ -201,7 +226,7 @@ if __name__ == "__main__":
         rb.updatePose(path.poses[i].pose.position,
                       q, frame="world")
 
-        rb_transformed = transform(rb)
+        # rb_transformed = transform(rb)
 
         # print("robot pos:", rb_transformed.pose.position.x,
         #   rb_transformed.pose.position.y, rb_transformed.pose.position.z, " orient:", rb_transformed.pose.orientation.x, rb_transformed.pose.orientation.y, rb_transformed.pose.orientation.z, rb_transformed.pose.orientation.w)
