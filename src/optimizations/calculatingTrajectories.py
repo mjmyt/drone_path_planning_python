@@ -44,8 +44,8 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
 
     A = np.zeros((8*n, 8*n))
     b = np.zeros((8*n, 1))
-    print("A.shape:", A.shape)
-    print("b.shape:", b.shape)
+    # print("A.shape:", A.shape)
+    # print("b.shape:", b.shape)
 
     time_points = []
     for i, traj_point in enumerate(waypoints):
@@ -124,7 +124,7 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
         piece_pols.append(Polynomial(p))
 
     # tests
-    DEBUG = 1
+    DEBUG = 0
     if DEBUG:
         for i, wp in enumerate(waypoints):
             t = wp.t
