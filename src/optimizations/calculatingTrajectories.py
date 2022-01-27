@@ -187,7 +187,9 @@ def calculate_trajectory4D(waypoints):
     pols_coeffs = [polx, poly, polz, polyaw]
     pc_pols = [pc_polx, pc_poly, pc_polz, pc_polyaw]
 
-    visualize_trajectory3D(pc_pols)
+    # visualize_trajectory3D(pc_pols)
+
+    return pols_coeffs, pc_pols
 
 
 def visualize_trajectory3D(pols):
