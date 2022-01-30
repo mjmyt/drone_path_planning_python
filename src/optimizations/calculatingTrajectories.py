@@ -131,7 +131,7 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
         prev_t = traj_point.t
 
     # print("det(A):", np.linalg.det(A))
-    # np.savetxt("A_mlkia.csv", A, delimiter=",")
+    # np.savetxt("A.csv", A, delimiter=",")
     # np.savetxt("b.csv", b, delimiter=",")
 
     polynomials_coefficients = np.linalg.solve(a=A, b=b)

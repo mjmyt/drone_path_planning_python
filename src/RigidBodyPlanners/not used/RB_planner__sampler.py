@@ -205,7 +205,7 @@ def plan(samplerIndex):
         path.interpolate(50)
 
         # print the path to a file
-        file_path = "mlkia_path.txt"
+        file_path = "path.txt"
 
         print("Saving path to %s" % file_path)
         text_file = open(file_path, "w")
