@@ -27,6 +27,9 @@ i-th waypoint conditions:
     x_i-1(5)(ti) =  x_i(5)(ti)
     x_i-1(6)(ti) =  x_i(6)(ti)
 
+Last wp(waipont) conditions:
+    x(-1) = waypoint(-1)
+    x'(-1) = x''(-1)=x'''(-1)= 0 
 """
 ##############################################################################################
 
@@ -41,25 +44,27 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
     # If m is the number of waypoints, n is the number of polynomials
     m = len(waypoints)
     n = m - 1
-
+    # print("m:", m, "n:", n)
     A = np.zeros((8*n, 8*n))
     b = np.zeros((8*n, 1))
     # print("A.shape:", A.shape)
     # print("b.shape:", b.shape)
 
     time_points = []
+    prev_t = 0
     for i, traj_point in enumerate(waypoints):
         traj_point: Point_time
 
         wp = traj_point.wp.getType(wp_type)
-        t = traj_point.t
-        time_points.append(t)
+        t = traj_point.t-prev_t
+        if i != 0:
+            time_points.append(t)
 
         pol = Polynomial([1, 1, 1, 1, 1, 1, 1, 1])
 
         if (i == 0 or i == n):  # start/end constraints
 
-            for j in range(0, n):
+            for j in range(0, 4):
                 arr = np.array(pol.pol_coeffs_at_t(t))
 
                 # padding with zeros
@@ -72,7 +77,6 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
                         continue
 
                     A[ind, 8*(i-1):8*(i)] = arr
-
                 pol = pol.derivative()
 
             tmp = np.array([wp, 0, 0, 0]).reshape((4, 1))
@@ -84,39 +88,55 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
 
         else:  # continuity constraints
 
-            array_to_add = np.zeros((8, 8))
+            array_to_add_prev = np.zeros((8, 8))
             for j in range(0, 8):
                 vec = np.array(pol.pol_coeffs_at_t(t))
 
                 # padding with zeros
                 vec = np.pad(vec, (8-len(vec), 0), 'constant')
-                array_to_add[j, :] = vec
+                array_to_add_prev[j, :] = vec
                 pol = pol.derivative()
+
+            # TODO: Make this a separate function
+            pol = Polynomial([1, 1, 1, 1, 1, 1, 1, 1])
+            array_to_add_next = np.zeros((8, 8))
+            for j in range(0, 8):
+                # t=0 because it is the start of the next polynomial
+                vec = np.array(pol.pol_coeffs_at_t(t=0))
+
+                # padding with zeros
+                vec = np.pad(vec, (8-len(vec), 0), 'constant')
+                array_to_add_next[j, :] = vec
+                pol = pol.derivative()
+
+            # print("array_to_add_prev:", array_to_add_prev)
+            # print("array_to_add_next:", array_to_add_next)
 
             startl = 4+(i-1)*8  # start line index
             endl = 4+(i-1)*8 + 6   # end line index
             # conitnuity constraints
-            A[startl:endl, 8*(i-1):8*(i)] = array_to_add[1:7, :]
-            A[startl:endl, 8*(i):8*(i+1)] = -array_to_add[1:7, :]
+            A[startl:endl, 8*(i-1):8*(i)] = array_to_add_prev[1:7, :]
+            A[startl:endl, 8*(i):8*(i+1)] = -array_to_add_next[1:7, :]
 
             b[startl:endl] = np.zeros((6, 1))
 
             # waypoints constraints
-            A[endl,  8*(i-1):8*(i)] = array_to_add[0, :]
-            A[endl+1, 8*(i):8*(i+1)] = array_to_add[0, :]
+            A[endl,  8*(i-1):8*(i)] = array_to_add_prev[0, :]
+            A[endl+1, 8*(i):8*(i+1)] = array_to_add_next[0, :]
 
             b[endl] = wp
             b[endl+1] = wp
 
-            np.set_printoptions(suppress=True)
-            # print(startl, endl)
-            # print(array_to_add)
+        # copy the time
+        prev_t = traj_point.t
+
+    # print("det(A):", np.linalg.det(A))
+    # np.savetxt("A_mlkia.csv", A, delimiter=",")
+    # np.savetxt("b.csv", b, delimiter=",")
 
     polynomials_coefficients = np.linalg.solve(a=A, b=b)
 
     # print("polynomials_coefficients.shape:", polynomials_coefficients.shape)
-    np.savetxt("A.csv", A, delimiter=",")
-    np.savetxt("b.csv", b, delimiter=",")
 
     piece_pols = []  # piecewise polynomials
     for i in range(n):
@@ -169,9 +189,10 @@ def calculate_trajectory1D(waypoints, wp_type=Waypoint.WP_TYPE_X):
                     f"accel at t={t} and pol={i+1}-->{piece_pols[i+1].derivative().derivative().eval(t)}")
 
     total_pol = PiecewisePolynomial(piece_pols, time_points)
-
-    # for pol in piece_pols:
-    #     print(pol.p)
+    # t_final = sum(total_pol.time_durations)
+    # print("t_final:", t_final)
+    # for t in linspace(0, t_final, 100):
+    # print(f"t={t} --> {total_pol.eval(t)}")
 
     return piece_pols, total_pol
 
@@ -242,35 +263,11 @@ if __name__ == "__main__":
 
     # traj_points.append(Point_time(Waypoint(0.0, 0.0,  0.0, 0.0), t=0))
     # traj_points.append(Point_time(Waypoint(2.0, 2.2,  0.3, 0.0), t=1))
-    # traj_points.append(Point_time(Waypoint(4.0, 8.0,  0.8, 0.0), t=2))
-    # traj_points.append(Point_time(Waypoint(0.0, 2.0, 0.4, 0.0), t=3))
-    # traj_points.append(Point_time(Waypoint(0.0, 0.0, 0.0, 0.0), t=4))
+    # traj_points.append(Point_time(Waypoint(4.0, 8.0,  0.8, 0.0), t=3))
+    # # traj_points.append(Point_time(Waypoint(0.0, 2.0, 0.4, 0.0), t=4))
+    # # traj_points.append(Point_time(Waypoint(0.0, 0.0, 0.0, 0.0), t=5))
 
     for i, point in enumerate(test_data):
         traj_points.append(Point_time(Waypoint(point[0], point[1], point[2], point[3]), t=i*timestep))
 
     calculate_trajectory1D(traj_points, Waypoint.WP_TYPE_X)
-    # calculate_trajectory4D(traj_points)
-
-    # t = np.linspace(0, 5, 100)
-    # y = [pol.eval(i) for i in t]
-
-    # plt.figure()
-    # plt.plot(t, y)
-    # plt.grid(True)
-
-    # plt.show()
-
-    # t = 0
-    # p = piece_pols[0]
-
-    # print(f"pos at t={t} --> {p.eval(t)}")
-
-    # t = 2
-    # p = piece_pols[0].derivative().derivative()
-
-    # print(f"vel at t={t} --> {p.eval(t)}")
-
-    # t = 2
-    # p = piece_pols[1].derivative().derivative()
-    # print(f"vel at t={t} --> {p.eval(t)}")

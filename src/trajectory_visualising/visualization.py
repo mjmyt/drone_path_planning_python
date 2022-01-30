@@ -5,7 +5,13 @@ from nav_msgs.msg import Path
 import rospy
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-from .uav_trajectory import *
+try:
+    from .uav_trajectory import *
+except ImportError:
+    from uav_trajectory import *
+
+import os
+print("Current directory:", os.getcwd())
 
 
 def visualize_python(tr: Trajectory, timestep: float):
@@ -67,8 +73,9 @@ def get_nav_path_msg(tr: Trajectory, timestep: float):
 
 if __name__ == "__main__":
     tr = Trajectory()
-    tr.loadcsv(
-        '/home/marios/crazyswarm/ros_ws/src/drone_path_planning/src/traj.csv')
+    file_name = "/home/marios/piecewise_pole.csv"
+    # file_name='/home/marios/crazyswarm/ros_ws/src/drone_path_planning/src/traj.csv'
+    tr.loadcsv(file_name)
 
     print("Trajectoty time duration:", tr.duration)
     timestep = 0.1

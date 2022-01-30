@@ -33,9 +33,7 @@ def callback(path: Path):
         q = [pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w]
         yaw = tf.transformations.euler_from_quaternion(q)[2]
 
-        print(x, y, z, q[2])
-
-        traj_points.append(Point_time(Waypoint(x, y, z, yaw), t=time_step*i))
+        traj_points.append(Point_time(Waypoint(x, y, z, yaw), t=time_step*i))  # TODO: set constant yaw
 
     pols_coeffs, pc_pols = calculate_trajectory4D(traj_points)
 
@@ -43,7 +41,7 @@ def callback(path: Path):
     pol_to_send.cf_id = 0
 
     n = len(pc_pols[0].pols)
-    matrix = np.zeros((n, 8*4+1), dtype=np.float32)  # 8 coeffs per x,y,z,yaw + 1 for time
+    matrix = np.zeros((n, 8*4+1), dtype=np.float32)  # 8 coeffs per x,y,z,yaw + 1 for duration
     for i, pc_pol in enumerate(pc_pols):  # iterate over piecewise polynomials(x,y,z,yaw)
         for j, pol in enumerate(pc_pol.pols):
             coeffs = pol.p  # get coefficients of j-th  polynomial
@@ -51,9 +49,8 @@ def callback(path: Path):
             matrix[j, 8*i:8*(i+1)] = coeffs.reshape((1, 8))  # add coefficients to matrix
 
     #  dt column
-    t_i_plus_1 = np.array(pc_pols[0].time_setpoints[1:])
-    t_i = np.array(pc_pols[0].time_setpoints[:-1])
-    time_col = t_i_plus_1 - t_i
+
+    time_col = np.array(pc_pols[0].time_durations)
     matrix[:, -1] = time_col
 
     np.savetxt("Pol_matrix.csv", matrix, delimiter=",")

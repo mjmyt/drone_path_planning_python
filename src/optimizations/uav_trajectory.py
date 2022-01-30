@@ -144,23 +144,29 @@ class PiecewisePolynomial():
 
     """
 
-    def __init__(self, pols: list, time_setpoints: list):
+    def __init__(self, pols: list, time_durations: list):
         self.pols = pols
         self.nOfPols = len(pols)
 
         # self.time_setpoints = np.zeros(self.nOfPols+1)
-        self.time_setpoints = time_setpoints
+        self.time_durations = time_durations
 
     def eval(self, t):
         assert t >= 0
+        # print("Durations: ", self.time_durations)
         # Evaluate resylt at time t.
-        for i in range(self.nOfPols):
+        t_counting = 0
+        for i in range(self.nOfPols+1):
 
-            tpr = self.time_setpoints[i]
-            tnxt = self.time_setpoints[i + 1] if i != self.nOfPols else np.inf
+            if i >= self.nOfPols:  # t bigger than whole duration
+                # print("Calling pol {} with t:{}".format(i, t-sum(self.time_durations[:-1])))
+                return self.pols[-1].eval(t-sum(self.time_durations[:-1]))
 
-            if t >= tpr and t < tnxt:
-                return self.pols[i].eval(t)
+            if t < t_counting+self.time_durations[i]:
+                # print("Calling pol {} with t:{}".format(i, t-t_counting))
+                return self.pols[i].eval(t-t_counting)
+
+            t_counting = t_counting + self.time_durations[i]
 
 
 class Waypoint():
