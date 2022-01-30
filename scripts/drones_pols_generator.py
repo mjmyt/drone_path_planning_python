@@ -9,19 +9,33 @@ import os
 from geometry_msgs.msg import PoseStamped, TransformStamped, Quaternion, Point
 
 from crazyswarm.msg import TrajectoryPolynomialPieceMarios
-
 from optimizations import *
 
 # print working directory
 print("Current working directory:", os.getcwd())
 
 
-def callback(path: Path):
+def callback1(path: Path):
+    if callback1.counter == 0:
+        path_to_pol(path, 0)
+        callback1.counter += 1
+
+
+callback1.counter = 0
+
+
+def callback2(path: Path):
+    if callback2.counter == 0:
+        path_to_pol(path, 1)
+        callback2.counter += 1
+
+
+callback2.counter = 0
+
+
+def path_to_pol(path: Path, cfid: int):
     print("Path received...")
     # print(len(path.poses))
-    callback.counter += 1
-    if callback.counter > 1:
-        return 0
 
     total_duration = 10  # secs
     n = len(path.poses)
@@ -38,7 +52,7 @@ def callback(path: Path):
     pols_coeffs, pc_pols = calculate_trajectory4D(traj_points)
 
     pol_to_send = TrajectoryPolynomialPieceMarios()
-    pol_to_send.cf_id = 0
+    pol_to_send.cf_id = cfid
 
     n = len(pc_pols[0].pols)
     matrix = np.zeros((n, 8*4+1), dtype=np.float32)  # 8 coeffs per x,y,z,yaw + 1 for duration
@@ -65,9 +79,6 @@ def callback(path: Path):
     print("Published polynomial piece...")
 
 
-callback.counter = 0
-
-
 def listener():
 
     # In ROS, nodes are uniquely named. If two nodes with the same
@@ -77,8 +88,8 @@ def listener():
     # run simultaneously.
     rospy.init_node('drones_path_listener', anonymous=True)
 
-    # rospy.Subscriber('drone1Path',  Path, callback)
-    rospy.Subscriber('drone2Path',  Path, callback)
+    rospy.Subscriber('drone1Path',  Path, callback1)
+    rospy.Subscriber('drone2Path',  Path, callback2)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
