@@ -17,7 +17,7 @@ print("Current working directory:", os.getcwd())
 
 def callback1(path: Path):
     if callback1.counter == 0:
-        path_to_pol(path, 0)
+        path_to_pol(path, 1)
         callback1.counter += 1
 
 
@@ -26,7 +26,7 @@ callback1.counter = 0
 
 def callback2(path: Path):
     if callback2.counter == 0:
-        path_to_pol(path, 1)
+        path_to_pol(path, 2)
         callback2.counter += 1
 
 
@@ -86,7 +86,7 @@ def listener():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'listener' node so that multiple listeners can
     # run simultaneously.
-    rospy.init_node('drones_path_listener', anonymous=True)
+    rospy.init_node('drones_path_listener')
 
     rospy.Subscriber('drone1Path',  Path, callback1)
     rospy.Subscriber('drone2Path',  Path, callback2)

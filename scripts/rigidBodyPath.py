@@ -169,7 +169,7 @@ def calculate_path_FCL():
 
 if __name__ == "__main__":
 
-    rospy.init_node("rb_path_planning", anonymous=True)
+    rospy.init_node("rb_path_planning")
     # transform()
 
     # robot marker initialization
