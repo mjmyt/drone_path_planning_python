@@ -198,6 +198,8 @@ install(PROGRAMS
   scripts/rigidBodyPath.py
   scripts/drones_traj_generator.py
   scripts/drones_pols_generator.py
+  scripts/crazyflie_controller.py
+  scripts/traj_executor_position_controller.py
   
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
