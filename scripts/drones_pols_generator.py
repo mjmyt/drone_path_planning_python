@@ -8,7 +8,11 @@ from nav_msgs.msg import Path
 import os
 from geometry_msgs.msg import PoseStamped, TransformStamped, Quaternion, Point
 
-from crazyswarm.msg import TrajectoryPolynomialPieceMarios
+try:
+    from execution.msg import TrajectoryPolynomialPieceMarios
+except:
+    from crazyswarm.msg import TrajectoryPolynomialPieceMarios
+
 from optimizations import *
 
 # print working directory
@@ -44,10 +48,12 @@ def path_to_pol(path: Path, cfid: int):
     traj_points = []
     for i, pose in enumerate(path.poses):
         x, y, z = pose.pose.position.x, pose.pose.position.y, pose.pose.position.z
-        q = [pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w]
+        q = [pose.pose.orientation.x, pose.pose.orientation.y,
+             pose.pose.orientation.z, pose.pose.orientation.w]
         yaw = tf.transformations.euler_from_quaternion(q)[2]
 
-        traj_points.append(Point_time(Waypoint(x, y, z, yaw), t=time_step*i))  # TODO: set constant yaw
+        # TODO: set constant yaw
+        traj_points.append(Point_time(Waypoint(x, y, z, yaw), t=time_step*i))
 
     pols_coeffs, pc_pols = calculate_trajectory4D(traj_points)
 
@@ -55,12 +61,15 @@ def path_to_pol(path: Path, cfid: int):
     pol_to_send.cf_id = cfid
 
     n = len(pc_pols[0].pols)
-    matrix = np.zeros((n, 8*4+1), dtype=np.float32)  # 8 coeffs per x,y,z,yaw + 1 for duration
-    for i, pc_pol in enumerate(pc_pols):  # iterate over piecewise polynomials(x,y,z,yaw)
+    # 8 coeffs per x,y,z,yaw + 1 for duration
+    matrix = np.zeros((n, 8*4+1), dtype=np.float32)
+    # iterate over piecewise polynomials(x,y,z,yaw)
+    for i, pc_pol in enumerate(pc_pols):
         for j, pol in enumerate(pc_pol.pols):
             coeffs = pol.p  # get coefficients of j-th  polynomial
 
-            matrix[j, 8*i:8*(i+1)] = coeffs.reshape((1, 8))  # add coefficients to matrix
+            # add coefficients to matrix
+            matrix[j, 8*i:8*(i+1)] = coeffs.reshape((1, 8))
 
     #  dt column
 
@@ -96,7 +105,8 @@ def listener():
 
 
 # create a publisher to publish the trajectory
-piece_pols_pub = rospy.Publisher('piece_pol', TrajectoryPolynomialPieceMarios, queue_size=10)
+piece_pols_pub = rospy.Publisher(
+    'piece_pol', TrajectoryPolynomialPieceMarios, queue_size=10)
 
 if __name__ == '__main__':
     listener()
