@@ -35,7 +35,31 @@ print("cwd:", os.getcwd())
 
 
 class PlannerSepCollision:
-    def __init__(self) -> None:
+    def __init__(self, env_mesh_name, robot_mesh_name) -> None:
+        # env_mesh_name and robot_mesh_name are type of "env-scene-hole.stl"
+        try:
+            env_mesh = "ros_ws/src/drone_path_planning/resources/stl/{}".format(
+                env_mesh_name)
+            robot_mesh = "ros_ws/src/drone_path_planning/resources/stl/{}".format(
+                robot_mesh_name)
+
+            self.checker = Fcl_checker(env_mesh, robot_mesh)
+
+            # try:
+            #     checker = Fcl_checker(env_mesh, robot_mesh)
+            # except:
+            #     prefix = "crazyswarm/"
+            #     checker = Fcl_checker(
+            #         prefix+env_mesh, prefix + robot_mesh)
+        except:
+            print("cwd:", os.getcwd())
+            env_mesh = r"/home/marios/thesis_ws/src/drone_path_planning/resources/stl/{}".format(
+                env_mesh_name)
+            robot_mesh = r"/home/marios/thesis_ws/src/drone_path_planning/resources/stl/{}".format(
+                robot_mesh_name)
+
+            self.checker = Fcl_checker(env_mesh, robot_mesh)
+
         self.space = ob.RealVectorStateSpace(4)
 
         # set lower and upper bounds
@@ -44,7 +68,7 @@ class PlannerSepCollision:
         self.ss = og.SimpleSetup(self.space)
         # set State Validity Checker function
         self.ss.setStateValidityChecker(
-            ob.StateValidityCheckerFn(isStateValid))
+            ob.StateValidityCheckerFn(self.isStateValid))
 
         self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.001)
         # set problem optimization objective
@@ -173,38 +197,34 @@ class PlannerSepCollision:
 
         plt.show()
 
+    def isStateValid(self, state):
+        pos = [state[0], state[1], state[2]]
+        q = tf.transformations.quaternion_from_euler(0, 0, state[3])
 
-try:
-    env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
-    robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
-    try:
-        checker = Fcl_checker(env_mesh_name, robot_mesh_name)
-    except:
-        prefix = "crazyswarm/"
-        checker = Fcl_checker(prefix+env_mesh_name, prefix + robot_mesh_name)
-except:
-    print("cwd:", os.getcwd())
-    env_mesh_name = "src/drone_path_planning/resources/stl/env-scene-hole.stl"
-    robot_mesh_name = "src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
+        self.checker.set_robot_transform(pos, q)
+        no_collision = not self.checker.check_collision()
+        # print("No collision:", no_collision)
 
-    checker = Fcl_checker(env_mesh_name, robot_mesh_name)
+        # euler = tf.euler_from_quaternion(q)
+        # print("Euler:", euler[0], euler[1], euler[2])
+
+        return no_collision
 
 
-def isStateValid(state):
-    pos = [state[0], state[1], state[2]]
-    q = tf.transformations.quaternion_from_euler(0, 0, state[3])
+# try:
+#     env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
+#     robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
+#     try:
+#         checker = Fcl_checker(env_mesh_name, robot_mesh_name)
+#     except:
+#         prefix = "crazyswarm/"
+#         checker = Fcl_checker(prefix+env_mesh_name, prefix + robot_mesh_name)
+# except:
+#     print("cwd:", os.getcwd())
+#     env_mesh_name = "src/drone_path_planning/resources/stl/env-scene-hole.stl"
+#     robot_mesh_name = "src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
 
-    checker.set_robot_transform(pos, q)
-    no_collision = not checker.check_collision()
-    # print("No collision:", no_collision)
-
-    euler = tf.euler_from_quaternion(q)
-    # print("Euler:", euler[0], euler[1], euler[2])
-
-    return no_collision
-
-
-isStateValid.counter = 0
+#     checker = Fcl_checker(env_mesh_name, robot_mesh_name)
 
 
 def isBetween(x, min, max):
@@ -213,7 +233,9 @@ def isBetween(x, min, max):
 
 if __name__ == "__main__":
     # checker.visualize()
-    planner = PlannerSepCollision()
+    env_mesh_name = "env-scene-hole.stl"
+    robot_mesh_name = "robot-scene-triangle.stl"
+    planner = PlannerSepCollision(env_mesh_name, robot_mesh_name)
 
     start_pos = [-4, -2, 2]
     goal_pos = [4, 2, 2]
