@@ -5,7 +5,7 @@ from click import echo_via_pager
 from stl import mesh
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits import mplot3d
-from geometry_msgs.msg import Point, PoseStamped, Quaternion
+from geometry_msgs.msg import Point, PoseStamped, Quaternion, Pose
 import tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,7 +36,8 @@ print("cwd:", os.getcwd())
 
 class PlannerSepCollision:
     def __init__(self) -> None:
-        self.space = ob.SE3StateSpace()
+        self.space = ob.RealVectorStateSpace(4)
+
         # set lower and upper bounds
         self.set_bounds()
 
@@ -66,14 +67,18 @@ class PlannerSepCollision:
         self.ss.setup()
 
     def set_bounds(self):
-        bounds = ob.RealVectorBounds(3)
+        bounds = ob.RealVectorBounds(4)
+        # set bounds for x, y, z , rotation
         bounds.low[0] = -4.09
         bounds.low[1] = -6
         bounds.low[2] = -2.2
+        bounds.low[3] = -pi
 
+        # set bounds for x, y, z, rotation
         bounds.high[0] = 4.09
         bounds.high[1] = 6
         bounds.high[2] = 2.2
+        bounds.high[3] = pi
 
         # bounds.setLow(-10)
         # bounds.setHigh(10)
@@ -88,26 +93,26 @@ class PlannerSepCollision:
         n = text_file.write(self.path.printAsMatrix())
         text_file.close()
 
-    def set_start_goal(self, start_pose, goal_pose, transform=False):
+    def set_start_goal(self, start_pose: Pose, goal_pose: Pose, transform=False):
 
         # define start state
         start = ob.State(self.space)
-        start().setX(start_pose.position.x)
-        start().setY(start_pose.position.y)
-        start().setZ(start_pose.position.z)
-        start().rotation().x = start_pose.orientation.x
-        start().rotation().y = start_pose.orientation.y
-        start().rotation().z = start_pose.orientation.z
-        start().rotation().w = start_pose.orientation.w
+
+        start[0] = start_pose.position.x
+        start[1] = start_pose.position.y
+        start[2] = start_pose.position.z
+        start[3] = tf.transformations.euler_from_quaternion(
+            [start_pose.orientation.x, start_pose.orientation.y, start_pose.orientation.z, start_pose.orientation.w])[2]
 
         goal = ob.State(self.space)
-        goal().setX(goal_pose.position.x)
-        goal().setY(goal_pose.position.y)
-        goal().setZ(goal_pose.position.z)
-        goal().rotation().x = goal_pose.orientation.x
-        goal().rotation().y = goal_pose.orientation.y
-        goal().rotation().z = goal_pose.orientation.z
-        goal().rotation().w = goal_pose.orientation.w
+        goal[0] = goal_pose.position.x
+        goal[1] = goal_pose.position.y
+        goal[2] = goal_pose.position.z
+        goal[3] = tf.transformations.euler_from_quaternion(
+            [goal_pose.orientation.x, goal_pose.orientation.y, goal_pose.orientation.z, goal_pose.orientation.w])[2]
+
+        print("start:", start)
+        print("goal:", goal)
 
         self.ss.setStartAndGoalStates(start, goal)
         # return the start & goal states
@@ -186,12 +191,8 @@ except:
 
 
 def isStateValid(state):
-    # Some arbitrary condition on the state (note that thanks to
-    # dynamic type checking we can just call getX() and do not need
-    # to convert state to an SE2State.)
-    pos = [state.getX(), state.getY(), state.getZ()]
-    q = [state.rotation().x, state.rotation().y,
-         state.rotation().z, state.rotation().w]
+    pos = [state[0], state[1], state[2]]
+    q = tf.transformations.quaternion_from_euler(0, 0, state[3])
 
     checker.set_robot_transform(pos, q)
     no_collision = not checker.check_collision()
@@ -200,22 +201,7 @@ def isStateValid(state):
     euler = tf.euler_from_quaternion(q)
     # print("Euler:", euler[0], euler[1], euler[2])
 
-    max_angle = np.deg2rad(10)
-
-    valid_rotation_arr = []
-    if isStateValid.counter == 0:
-        print("First state:")
-        print(np.rad2deg(euler))
-        # input()
-        isStateValid.counter += 1
-
-    valid_rotation_arr.append(isBetween(euler[0], -max_angle, max_angle))
-    valid_rotation_arr.append(isBetween(euler[1], -max_angle, max_angle))
-    # valid_rotation_arr.append(isBetween(euler[2], -max_angle, max_angle))
-
-    valid_rotation = all(valid_rotation_arr)
-    # print("             Valid Rotation:", valid_rotation)
-    return no_collision and valid_rotation
+    return no_collision
 
 
 isStateValid.counter = 0

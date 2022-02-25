@@ -77,10 +77,8 @@ def getPath(data):
         pose.pose.position.y = data[i, 1]
         pose.pose.position.z = data[i, 2]
 
-        pose.pose.orientation.x = data[i, 3]
-        pose.pose.orientation.y = data[i, 4]
-        pose.pose.orientation.z = data[i, 5]
-        pose.pose.orientation.w = data[i, 6]
+        q = tf.quaternion_from_euler(0, 0, data[i, 3])
+        pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
 
         # transformed_pose = transform(pose,  inverse=True)
 #
@@ -140,7 +138,7 @@ def calculate_path_FCL():
     planner = PlannerSepCollision()
 
     start = [-2, 5, 0]
-    goal = [2, -3, 0]
+    goal = [-2, -3, 0]
 
     start_pose = PoseStamped()
     start_pose.pose.position.x, start_pose.pose.position.y, start_pose.pose.position.z = start
@@ -196,6 +194,8 @@ if __name__ == "__main__":
     try:
         data = np.loadtxt('path.txt')
     except Exception as e:
+        print("Error:", e)
+        print("Trying crazyswarm/path.txt...")
         try:
             data = np.loadtxt('crazyswarm/path.txt')
         except Exception as e:
@@ -221,10 +221,8 @@ if __name__ == "__main__":
         else:
             i += 1
 
-        # rb.updatePose(data[i, 0:3], data[i, 3:7], frame="ompl")
-        q = Quaternion(data[i, 3], data[i, 4], data[i, 5], data[i, 6])
         rb.updatePose(path.poses[i].pose.position,
-                      q, frame="world")
+                      path.poses[i].pose.orientation, frame="world")
 
         # rb_transformed = transform(rb)
 
