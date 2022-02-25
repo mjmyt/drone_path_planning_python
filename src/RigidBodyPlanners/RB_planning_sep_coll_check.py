@@ -169,13 +169,20 @@ class PlannerSepCollision:
         plt.show()
 
 
-env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
-robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
 try:
-    checker = Fcl_checker(env_mesh_name, robot_mesh_name)
+    env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
+    robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
+    try:
+        checker = Fcl_checker(env_mesh_name, robot_mesh_name)
+    except:
+        prefix = "crazyswarm/"
+        checker = Fcl_checker(prefix+env_mesh_name, prefix + robot_mesh_name)
 except:
-    prefix = "crazyswarm/"
-    checker = Fcl_checker(prefix+env_mesh_name, prefix + robot_mesh_name)
+    print("cwd:", os.getcwd())
+    env_mesh_name = "src/drone_path_planning/resources/stl/env-scene-hole.stl"
+    robot_mesh_name = "src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
+
+    checker = Fcl_checker(env_mesh_name, robot_mesh_name)
 
 
 def isStateValid(state):

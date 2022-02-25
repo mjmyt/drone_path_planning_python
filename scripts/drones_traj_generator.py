@@ -51,10 +51,6 @@ def get_drone_positions(drone_positions):
     return drone_poses
 
 
-trajPub1 = rospy.Publisher('drone1Path',  Path, queue_size=10)
-trajPub2 = rospy.Publisher('drone2Path',  Path, queue_size=10)
-
-
 def transform(path, inverse=False) -> PoseStamped:
     buffer_core = tf2_ros.BufferCore(rospy.Duration(10.0))
 
@@ -79,7 +75,8 @@ def transform(path, inverse=False) -> PoseStamped:
         pose_transformed = tf2_geometry_msgs.do_transform_pose(drone_pose, ts2)
         path1.poses.append(pose_transformed)
 
-        pose_transformed2 = tf2_geometry_msgs.do_transform_pose(drone_pose2, ts2)
+        pose_transformed2 = tf2_geometry_msgs.do_transform_pose(
+            drone_pose2, ts2)
         path2.poses.append(pose_transformed2)
 
         # print("rb pose")
@@ -114,5 +111,7 @@ def listener():
     rospy.spin()
 
 
+trajPub1 = rospy.Publisher('drone1Path',  Path, queue_size=10)
+trajPub2 = rospy.Publisher('drone2Path',  Path, queue_size=10)
 if __name__ == '__main__':
     listener()
