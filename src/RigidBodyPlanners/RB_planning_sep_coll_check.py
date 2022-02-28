@@ -25,9 +25,9 @@ except ImportError:
     from ompl import geometric as og
 
 try:
-    from .fcl_checker import Fcl_checker
+    from .fcl_checker import Fcl_checker, drones_formation_2_triangle_points, create_3D_triangle_stl
 except ImportError:
-    from fcl_checker import Fcl_checker
+    from fcl_checker import Fcl_checker, drones_formation_2_triangle_points, create_3D_triangle_stl
 
 import os
 

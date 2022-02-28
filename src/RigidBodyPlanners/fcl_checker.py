@@ -80,6 +80,10 @@ def visualize_meshes(filenames):
     axes.set_ylabel('Y')
     axes.set_zlabel('Z')
 
+    axes.set_xlim3d(-2, 2)
+    axes.set_ylim3d(-2, 2)
+    axes.set_zlim3d(-1, 2)
+
     # # Auto scale to the mesh size
     # scale = your_mesh.points.flatten(-1)
     # axes.auto_scale_xyz(scale, scale, scale)
@@ -113,7 +117,7 @@ def create_3D_triangle_stl(p0, p1, p2, custom_filename):
     robot = Fcl_mesh()
     # create 3d triangle mesh
 
-    thickness = 0.46
+    thickness = 0.3
     offset = 1
     robot.verts = []
     robot.verts.append([p0[0],  offset + thickness/2, p0[1]])
@@ -148,7 +152,7 @@ def create_3D_triangle_stl(p0, p1, p2, custom_filename):
             [verts[tr[0]], verts[tr[1]], verts[tr[2]]])
 
     m = mesh.Mesh(data)
-    m.save(custom_file_name)
+    m.save(custom_filename)
 
     return m
 
@@ -194,14 +198,16 @@ if __name__ == '__main__':
 
     custom_file_name = "custom_mesh.stl"
 
-    p0 = np.array([-1.68, 1])
-    p1 = np.array([1.68, 1])
+    custom_robot_file_name = "custom_triangle_robot.stl"
 
-    p0, p1 = drones_formation_2_triangle_points(1.68*2, np.deg2rad(20))
-    print(p0, p1)
+    # p0 = np.array([-1.68, 1])
+    # p1 = np.array([1.68, 1])
 
-    p2 = np.array([0, -1])
+    # p0, p1 = drones_formation_2_triangle_points(1.68*2, np.deg2rad(20))
+    # print(p0, p1)
 
-    create_3D_triangle_stl(p0, p1, p2, custom_file_name)
+    # p2 = np.array([0, -1])
 
-    visualize_meshes([custom_file_name, robot_mesh_name])
+    # create_3D_triangle_stl(p0, p1, p2, custom_file_name)
+
+    visualize_meshes([custom_robot_file_name])
