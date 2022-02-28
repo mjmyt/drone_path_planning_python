@@ -10,6 +10,7 @@ import tf
 import numpy as np
 import matplotlib.pyplot as plt
 from math import pi
+import rospy
 
 try:
     from ompl import base as ob
@@ -229,6 +230,27 @@ class PlannerSepCollision:
 
 def isBetween(x, min, max):
     return x >= min and x <= max
+
+
+def create_custom_robot(drones_distance, theta, L, catenary_lowest_function) -> mesh.Mesh:
+    """
+    This function generated a 3D rigid trinagle body suitable for path planning of the drone swarm
+    theta : represents the angle that is formed between the line connecting the drones and the horizontal plane 
+    """
+    # Get first 2 points based on drones distance and theta
+    p0, p1 = drones_formation_2_triangle_points(drones_distance, theta)
+    p0, p1 = [p0[0], p0[1], 0], [p1[0], p1[1], 0]
+
+    # Set the lowest point of the catenary formed by the 2 previous points
+    # as the 3rd point of the catenary
+
+    lowest_point = catenary_lowest_function(p0, p1, L).lowest_point
+    lowest_point = [lowest_point[0], lowest_point[2]]
+
+    mesh = create_3D_triangle_stl(p0, p1, lowest_point,
+                                  "custom_triangle_robot.stl")
+
+    return mesh
 
 
 if __name__ == "__main__":
