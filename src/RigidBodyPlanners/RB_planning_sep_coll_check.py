@@ -26,16 +26,17 @@ except ImportError:
 
 try:
     from .fcl_checker import Fcl_checker
+    from .custom_robot_mesh import Custom_robot_mesh
 except ImportError:
     from fcl_checker import Fcl_checker
+    from custom_robot_mesh import Custom_robot_mesh
 
 import os
-
 print("cwd:", os.getcwd())
 
 
 class PlannerSepCollision:
-    def __init__(self, env_mesh_name, robot_mesh_name) -> None:
+    def __init__(self, env_mesh_name, robot_mesh_name, cat_lowest_function) -> None:
         # env_mesh_name and robot_mesh_name are type of "env-scene-hole.stl"
         try:
             env_mesh = "ros_ws/src/drone_path_planning/resources/stl/{}".format(
@@ -53,10 +54,15 @@ class PlannerSepCollision:
 
             self.checker = Fcl_checker(env_mesh, robot_mesh)
 
-        self.L = 3.0  # rop length
+        self.states_tried = 0
+        self.L = 3.0  # rope length
+        drones_distance = 2  # distance between drones
+        theta = 0
+        self.custom_robot = Custom_robot_mesh(
+            drones_distance, theta, self.L, cat_lowest_function, mesh_type="fcl")
 
         # x, y, z, yaw , drones_distance
-        self.space = ob.RealVectorStateSpace(5)
+        self.space = ob.RealVectorStateSpace(4)
 
         # set lower and upper bounds
         self.set_bounds()
@@ -87,20 +93,20 @@ class PlannerSepCollision:
         self.ss.setup()
 
     def set_bounds(self):
-        bounds = ob.RealVectorBounds(5)
+        bounds = ob.RealVectorBounds(4)
         # set bounds for x, y, z , rotation
         bounds.low[0] = -4.09
         bounds.low[1] = -6
         bounds.low[2] = -2.2
         bounds.low[3] = -pi
-        bounds.low[4] = self.L * 0.1
+        # bounds.low[4] = self.L * 0.1
 
         # set bounds for x, y, z, rotation
         bounds.high[0] = 4.09
         bounds.high[1] = 6
         bounds.high[2] = 2.2
         bounds.high[3] = pi
-        bounds.high[4] = self.L * 0.9
+        # bounds.high[4] = self.L * 0.9
 
         # bounds.setLow(-10)
         # bounds.setHigh(10)
@@ -125,6 +131,7 @@ class PlannerSepCollision:
         start[2] = start_pose.position.z
         start[3] = tf.transformations.euler_from_quaternion(
             [start_pose.orientation.x, start_pose.orientation.y, start_pose.orientation.z, start_pose.orientation.w])[2]
+        # start[4] = self.L * 0.5
 
         goal = ob.State(self.space)
         goal[0] = goal_pose.position.x
@@ -132,6 +139,7 @@ class PlannerSepCollision:
         goal[2] = goal_pose.position.z
         goal[3] = tf.transformations.euler_from_quaternion(
             [goal_pose.orientation.x, goal_pose.orientation.y, goal_pose.orientation.z, goal_pose.orientation.w])[2]
+        # goal[4] = self.L * 0.5
 
         print("start:", start)
         print("goal:", goal)
@@ -199,26 +207,20 @@ class PlannerSepCollision:
         pos = [state[0], state[1], state[2]]
         q = tf.transformations.quaternion_from_euler(0, 0, state[3])
 
+        # drones_distance = state[4]
+        drones_distance = 2
+        theta = 0
+        self.custom_robot.update_mesh(drones_distance, theta, self.L)
+        self.checker.update_robot(self.custom_robot.mesh)
+
         self.checker.set_robot_transform(pos, q)
+
         no_collision = not self.checker.check_collision()
+        self.states_tried += 1
+        if (self.states_tried % 100) == 0:
+            print("Tried %d states" % self.states_tried)
 
         return no_collision
-
-
-# try:
-#     env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
-#     robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
-#     try:
-#         checker = Fcl_checker(env_mesh_name, robot_mesh_name)
-#     except:
-#         prefix = "crazyswarm/"
-#         checker = Fcl_checker(prefix+env_mesh_name, prefix + robot_mesh_name)
-# except:
-#     print("cwd:", os.getcwd())
-#     env_mesh_name = "src/drone_path_planning/resources/stl/env-scene-hole.stl"
-#     robot_mesh_name = "src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
-
-#     checker = Fcl_checker(env_mesh_name, robot_mesh_name)
 
 
 def isBetween(x, min, max):

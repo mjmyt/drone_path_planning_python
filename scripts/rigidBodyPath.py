@@ -18,6 +18,9 @@ import tf2_geometry_msgs
 from ompl import base as ob
 from ompl import geometric as og
 
+from catenaries.srv import CatLowestPoint, CatLowestPointResponse
+
+
 print("Current working directory:", os.getcwd())
 DRONES_NUMBER = 5
 
@@ -133,12 +136,12 @@ def calculate_path():
 
 
 def calculate_path_FCL():
-    # planner = RBPlanner()
     env_mesh_name = "env-scene-hole.stl"
     env_mesh_name = "env-scene-hole-narrow.stl"
 
     robot_mesh_name = "robot-scene-triangle.stl"
-    planner = PlannerSepCollision(env_mesh_name, robot_mesh_name)
+    planner = PlannerSepCollision(
+        env_mesh_name, robot_mesh_name, get_cat_lowest_function())
 
     start = [-2, 5, 0]
     goal = [-2, -3, 0]
@@ -166,6 +169,18 @@ def calculate_path_FCL():
 
     planner.solve(timeout=40.0)
     # planner.visualize_path()
+
+
+def get_cat_lowest_function():
+    rospy.wait_for_service('catenary_lowest_point')
+    try:
+        catenary_lowest = rospy.ServiceProxy(
+            'catenary_lowest_point', CatLowestPoint)
+
+    except rospy.ServiceException as e:
+        print("Service call failed: %s" % e)
+
+    return catenary_lowest
 
 
 if __name__ == "__main__":

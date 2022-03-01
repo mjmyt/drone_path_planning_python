@@ -40,7 +40,7 @@ class Custom_robot_mesh():
     def get_triangle_3D_points(p0, p1, p2):
         # Created a matrix with all the vertices needed for the 3D triangle
         thickness = 0.3  # thickness of the triangle ,maybe should be a parameter
-        offset = 1  # TODO: makes this 0 (used for comapring with thhe old one)
+        offset = 0  # TODO: makes this 0 (used for comapring with thhe old one)
 
         verts = np.zeros((6, 3))
 
@@ -94,6 +94,7 @@ class Custom_robot_mesh():
         m.tris = tris
         m.create_fcl_mesh()
 
+        # print("Created Fcl_Mesh ")
         return m
 
     def get_triangle_2D_points(self, drones_distance, theta, L) -> mesh.Mesh:
@@ -139,6 +140,15 @@ class Custom_robot_mesh():
 
         return verts
 
+    def update_mesh(self, drones_distance, theta, L):
+        if self.MESH_TYPE == mesh.Mesh:
+            self.update_mesh_stl_mesh(drones_distance, theta, L)
+        elif self.MESH_TYPE == Fcl_mesh:
+            self.update_mesh_fcl_mesh(drones_distance, theta, L)
+        else:
+            print("mesh_type is not one of the expected ones...")
+            sys.exit()
+
     def update_mesh_fcl_mesh(self, drones_distance, theta, L):
         # verts = self.update_verts(drones_distance, theta, L)
 
@@ -152,15 +162,6 @@ class Custom_robot_mesh():
     def update_mesh_stl_mesh(self, drones_distance, theta, L):
         self.mesh = self.create_custom_robot(
             drones_distance, theta, L)  # TODO: should try not to  making a new mesh
-
-    def update_mesh(self, drones_distance, theta, L):
-        if self.MESH_TYPE == mesh.Mesh:
-            self.update_mesh_stl_mesh(drones_distance, theta, L)
-        elif self.MESH_TYPE == Fcl_mesh:
-            self.update_mesh_fcl_mesh(drones_distance, theta, L)
-        else:
-            print("mesh_type is not one of the expected ones...")
-            sys.exit()
 
 
 if __name__ == "__main__":

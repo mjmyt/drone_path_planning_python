@@ -108,6 +108,10 @@ class Fcl_checker():
         self.env = Fcl_mesh(env_mesh_file)
         self.robot = Fcl_mesh(robot_mesh_file)
 
+        # create collision objects
+        self.robot.create_collision_object()
+        self.env.create_collision_object()
+
         self.request = fcl.CollisionRequest()
         self.result = fcl.CollisionResult()
 
@@ -122,6 +126,10 @@ class Fcl_checker():
 
     def set_robot_transform(self, T, q=[0, 0, 0, 1]):
         self.robot.set_transform(T, q)
+
+    def update_robot(self, custom_mesh: Fcl_mesh):
+        self.robot = custom_mesh
+        self.robot.create_collision_object()
 
 
 def check_collision_detect_test():
@@ -158,4 +166,4 @@ if __name__ == '__main__':
 
     # create_3D_triangle_stl(p0, p1, p2, custom_file_name)
 
-    visualize_meshes([custom_robot_file_name])
+    visualize_meshes([env_mesh_name, custom_robot_file_name])
