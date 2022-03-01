@@ -214,7 +214,11 @@ def isStateValid(state):
     # valid_rotation_arr.append(isBetween(euler[2], -max_angle, max_angle))
 
     valid_rotation = all(valid_rotation_arr)
-    # print("             Valid Rotation:", valid_rotation)
+
+    if isStateValid.counter % 100 == 0:
+        print("Counter:", isStateValid.counter)
+    isStateValid.counter += 1
+
     return no_collision and valid_rotation
 
 
