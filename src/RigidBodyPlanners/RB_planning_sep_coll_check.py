@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 # Author: Mark Moll
-from click import echo_via_pager
 from stl import mesh
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits import mplot3d
@@ -26,9 +25,9 @@ except ImportError:
     from ompl import geometric as og
 
 try:
-    from .fcl_checker import Fcl_checker, drones_formation_2_triangle_points, create_3D_triangle_stl
+    from .fcl_checker import Fcl_checker
 except ImportError:
-    from fcl_checker import Fcl_checker, drones_formation_2_triangle_points, create_3D_triangle_stl
+    from fcl_checker import Fcl_checker
 
 import os
 
@@ -204,10 +203,6 @@ class PlannerSepCollision:
 
         self.checker.set_robot_transform(pos, q)
         no_collision = not self.checker.check_collision()
-        # print("No collision:", no_collision)
-
-        # euler = tf.euler_from_quaternion(q)
-        # print("Euler:", euler[0], euler[1], euler[2])
 
         return no_collision
 
@@ -230,27 +225,6 @@ class PlannerSepCollision:
 
 def isBetween(x, min, max):
     return x >= min and x <= max
-
-
-def create_custom_robot(drones_distance, theta, L, catenary_lowest_function) -> mesh.Mesh:
-    """
-    This function generated a 3D rigid trinagle body suitable for path planning of the drone swarm
-    theta : represents the angle that is formed between the line connecting the drones and the horizontal plane 
-    """
-    # Get first 2 points based on drones distance and theta
-    p0, p1 = drones_formation_2_triangle_points(drones_distance, theta)
-    p0, p1 = [p0[0], p0[1], 0], [p1[0], p1[1], 0]
-
-    # Set the lowest point of the catenary formed by the 2 previous points
-    # as the 3rd point of the catenary
-
-    lowest_point = catenary_lowest_function(p0, p1, L).lowest_point
-    lowest_point = [lowest_point[0], lowest_point[2]]
-
-    mesh = create_3D_triangle_stl(p0, p1, lowest_point,
-                                  "custom_triangle_robot.stl")
-
-    return mesh
 
 
 if __name__ == "__main__":
