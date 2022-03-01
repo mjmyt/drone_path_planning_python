@@ -93,15 +93,15 @@ class PlannerSepCollision:
     def set_bounds(self):
         bounds = ob.RealVectorBounds(4)
         # set bounds for x, y, z , rotation
-        bounds.low[0] = -4.09
-        bounds.low[1] = -6
-        bounds.low[2] = -2.2
+        bounds.low[0] = -2.2
+        bounds.low[1] = 2.8
+        bounds.low[2] = 0.5
         bounds.low[3] = -pi
 
         # set bounds for x, y, z, rotation
-        bounds.high[0] = 4.09
-        bounds.high[1] = 6
-        bounds.high[2] = 2.2
+        bounds.high[0] = 2.2
+        bounds.high[1] = 5.0
+        bounds.high[2] = 2.5
         bounds.high[3] = pi
 
         # bounds.setLow(-10)

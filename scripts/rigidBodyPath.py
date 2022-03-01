@@ -136,12 +136,14 @@ def calculate_path_FCL():
     # planner = RBPlanner()
     env_mesh_name = "env-scene-hole.stl"
     env_mesh_name = "env-scene-hole-narrow.stl"
+    env_mesh_name = "env-scene-ltu-experiment.stl"
 
     robot_mesh_name = "robot-scene-triangle.stl"
+
     planner = PlannerSepCollision(env_mesh_name, robot_mesh_name)
 
-    start = [-2, 5, 0]
-    goal = [-2, -3, 0]
+    start = [0, 3, 1]
+    goal = [0, 5, 1]
 
     start_pose = PoseStamped()
     start_pose.pose.position.x, start_pose.pose.position.y, start_pose.pose.position.z = start
@@ -180,7 +182,7 @@ if __name__ == "__main__":
     robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
 
     # Environment marker initialization
-    mesh = "package://drone_path_planning/resources/collada/env-scene-hole-narrow.dae"
+    mesh = "package://drone_path_planning/resources/collada/env-scene-ltu-experiment.dae"
     env = MeshMarker(id=1, mesh_path=mesh)
     env.color.r = 1
     env.color.g = 0

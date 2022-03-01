@@ -18,7 +18,8 @@ class Fcl_mesh():
 
     def load_stl(self, filename):
         env_mesh = mesh.Mesh.from_file(filename)
-        verts = np.around(np.unique(env_mesh.vectors.reshape([int(env_mesh.vectors.size/3), 3]), axis=0), 2)
+        verts = np.around(np.unique(env_mesh.vectors.reshape(
+            [int(env_mesh.vectors.size/3), 3]), axis=0), 2)
         vecs = np.around(env_mesh.vectors, 2)
         self.verts, self.vecs = verts, vecs
 
@@ -66,7 +67,8 @@ def visualize_meshes(filenames):
     # Load the STL files and add the vectors to the plot
     for filename in filenames:
         your_mesh = mesh.Mesh.from_file(filename)
-        axes.add_collection3d(mplot3d.art3d.Poly3DCollection(your_mesh.vectors))
+        axes.add_collection3d(
+            mplot3d.art3d.Poly3DCollection(your_mesh.vectors))
 
     axes.set_xlabel('X')
     axes.set_ylabel('Y')
@@ -92,7 +94,8 @@ class Fcl_checker():
         if T != None:
             self.robot.set_transform(T, q)
 
-        is_collision = fcl.collide(self.robot.collision_object, self.env.collision_object, self.request, self.result)
+        is_collision = fcl.collide(
+            self.robot.collision_object, self.env.collision_object, self.request, self.result)
 
         return is_collision
 
@@ -118,14 +121,17 @@ if __name__ == '__main__':
     # ret = fcl.collide(env.collision_object, robot.collision_object, request, result)
     # print(ret)
 
-    env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
-    robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene.stl"
+    env_mesh_name = "src/drone_path_planning/resources/stl/env-scene-hole.stl"
+    env_mesh_name = "src/drone_path_planning/resources/stl/env-scene-ltu-experiment.stl"
+
+    robot_mesh_name = "src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
 
     coll_checker = Fcl_checker(env_mesh_name, robot_mesh_name)
     q = tf.transformations.quaternion_from_euler(-pi/2, 0, 0)
     print(q)
 
-    coll_checker.set_robot_transform([-1.21917, -0.441611, -0.0462389], [-0.298798, 0.00548747, 0.0160421, 0.954166])
+    coll_checker.set_robot_transform(
+        [-1.21917, -0.441611, -0.0462389], [-0.298798, 0.00548747, 0.0160421, 0.954166])
 
     print(coll_checker.check_collision())
     # print(dir(coll_checker.robot.m))
