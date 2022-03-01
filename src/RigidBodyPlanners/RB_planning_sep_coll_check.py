@@ -10,6 +10,7 @@ import tf
 import numpy as np
 import matplotlib.pyplot as plt
 from math import pi
+import rospy
 
 try:
     from ompl import base as ob
@@ -189,6 +190,7 @@ def isStateValid(state):
     # Some arbitrary condition on the state (note that thanks to
     # dynamic type checking we can just call getX() and do not need
     # to convert state to an SE2State.)
+    t0 = rospy.get_time()
     pos = [state.getX(), state.getY(), state.getZ()]
     q = [state.rotation().x, state.rotation().y,
          state.rotation().z, state.rotation().w]
@@ -218,6 +220,8 @@ def isStateValid(state):
     if isStateValid.counter % 100 == 0:
         print("Counter:", isStateValid.counter)
     isStateValid.counter += 1
+    dt = rospy.get_time()-t0
+    print("is state valid took ", dt*100, "mseconds")
 
     return no_collision and valid_rotation
 
