@@ -44,13 +44,6 @@ class PlannerSepCollision:
                 robot_mesh_name)
 
             self.checker = Fcl_checker(env_mesh, robot_mesh)
-
-            # try:
-            #     checker = Fcl_checker(env_mesh, robot_mesh)
-            # except:
-            #     prefix = "crazyswarm/"
-            #     checker = Fcl_checker(
-            #         prefix+env_mesh, prefix + robot_mesh)
         except:
             print("cwd:", os.getcwd())
             env_mesh = r"/home/marios/thesis_ws/src/drone_path_planning/resources/stl/{}".format(
@@ -60,7 +53,10 @@ class PlannerSepCollision:
 
             self.checker = Fcl_checker(env_mesh, robot_mesh)
 
-        self.space = ob.RealVectorStateSpace(4)
+        self.L = 3.0  # rop length
+
+        # x, y, z, yaw , drones_distance
+        self.space = ob.RealVectorStateSpace(5)
 
         # set lower and upper bounds
         self.set_bounds()
@@ -91,18 +87,20 @@ class PlannerSepCollision:
         self.ss.setup()
 
     def set_bounds(self):
-        bounds = ob.RealVectorBounds(4)
+        bounds = ob.RealVectorBounds(5)
         # set bounds for x, y, z , rotation
         bounds.low[0] = -4.09
         bounds.low[1] = -6
         bounds.low[2] = -2.2
         bounds.low[3] = -pi
+        bounds.low[4] = self.L * 0.1
 
         # set bounds for x, y, z, rotation
         bounds.high[0] = 4.09
         bounds.high[1] = 6
         bounds.high[2] = 2.2
         bounds.high[3] = pi
+        bounds.high[4] = self.L * 0.9
 
         # bounds.setLow(-10)
         # bounds.setHigh(10)

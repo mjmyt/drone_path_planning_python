@@ -50,12 +50,14 @@ class Fcl_mesh():
 
         m.addSubModel(self.verts, self.tris)
         m.endModel()
-
-        T = t = fcl.Transform()
         self.m = m
-        self.collision_object = fcl.CollisionObject(m, T)
 
-        return m
+    def create_collision_object(self, mesh=None):
+        T = fcl.Transform()
+        if mesh is None:
+            mesh = self.m
+
+        self.collision_object = fcl.CollisionObject(mesh, T)
 
     def set_transform(self, T=[0, 0, 0], q=[0, 0, 0, 1]):
 
@@ -63,6 +65,15 @@ class Fcl_mesh():
         tf = fcl.Transform(q, T)
 
         self.collision_object.setTransform(tf)
+
+    def update_vertices(self, verts):
+        print(dir(self.m))
+        self.m.beginUpdateModel()
+
+        for vert in verts:
+            self.m.updateVertex(vert)
+
+        self.m.endUpdateModel()
 
 
 def visualize_meshes(filenames):

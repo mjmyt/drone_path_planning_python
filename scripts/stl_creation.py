@@ -13,11 +13,7 @@ import os
 print(os.getcwd())
 
 
-def client():
-    drones_distance = 2.5
-    L = 3
-    theta = np.deg2rad(0)
-
+def get_cat_lowest_function():
     rospy.wait_for_service('catenary_lowest_point')
     try:
         catenary_lowest = rospy.ServiceProxy(
@@ -26,7 +22,24 @@ def client():
     except rospy.ServiceException as e:
         print("Service call failed: %s" % e)
 
-    mesh = Custom_robot_mesh(drones_distance, theta, L, catenary_lowest)
+    return catenary_lowest
+
+
+def client():
+    drones_distance = 1
+    print("drone_distance: ", drones_distance)
+    L = 3
+    theta = np.deg2rad(0)
+
+    catenary_lowest = get_cat_lowest_function()
+    mesh = Custom_robot_mesh(drones_distance, theta, L,
+                             catenary_lowest, mesh_type="stl")
+
+    input("Hit any key to continue...")
+
+    drones_distance = 2
+    print("drone_distance: ", drones_distance)
+    mesh.update_mesh(drones_distance, theta, L)
 
 
 if __name__ == "__main__":
