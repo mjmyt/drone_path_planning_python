@@ -135,6 +135,7 @@ class Fcl_checker():
 def check_collision_detect_test():
     env_mesh_name = "src/drone_path_planning/resources/stl/env-scene-hole.stl"
     robot_mesh_name = "src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
+    robot_mesh_name = "src/drone_path_planning/resources/stl/custom_triangle_robot.stl"
 
     coll_checker = Fcl_checker(env_mesh_name, robot_mesh_name)
     q = tf.transformations.quaternion_from_euler(-pi/2, 0, 0)
@@ -154,7 +155,7 @@ if __name__ == '__main__':
 
     custom_file_name = "custom_mesh.stl"
 
-    custom_robot_file_name = "custom_triangle_robot.stl"
+    custom_robot_file_name = "src/drone_path_planning/resources/stl/custom_triangle_robot.stl"
 
     # p0 = np.array([-1.68, 1])
     # p1 = np.array([1.68, 1])
@@ -166,4 +167,4 @@ if __name__ == '__main__':
 
     # create_3D_triangle_stl(p0, p1, p2, custom_file_name)
 
-    visualize_meshes([env_mesh_name, custom_robot_file_name])
+    visualize_meshes([custom_robot_file_name])

@@ -1,8 +1,15 @@
+import os
 import sys
-from .fcl_checker import Fcl_mesh
 from stl import mesh
 import numpy as np
 import fcl
+import os
+from types import SimpleNamespace
+
+try:
+    from .fcl_checker import Fcl_mesh
+except:
+    from fcl_checker import Fcl_mesh
 
 
 class Custom_robot_mesh():
@@ -28,7 +35,7 @@ class Custom_robot_mesh():
 
         # get the distance between the 2 drones
         r = drones_distance/2
-        y_offset = 1
+        y_offset = 0
         # get the points of the triangle
         self.p0 = np.array([r * np.cos(theta),  y_offset + r * np.sin(theta)])
         self.p1 = np.array([-r * np.cos(theta), y_offset + -r * np.sin(theta)])
@@ -42,6 +49,9 @@ class Custom_robot_mesh():
         thickness = 0.3  # thickness of the triangle ,maybe should be a parameter
         offset = 0  # TODO: makes this 0 (used for comapring with thhe old one)
 
+        print("p0: ", p0)
+        print("p1: ", p1)
+        print("p2: ", p2)
         verts = np.zeros((6, 3))
 
         verts[0, :] = [p0[0],  offset + thickness/2, p0[1]]
@@ -51,6 +61,7 @@ class Custom_robot_mesh():
         verts[4, :] = [p1[0],  offset + -thickness/2, p1[1]]
         verts[5, :] = [p2[0],  offset + -thickness/2, p2[1]]
 
+        print("verts: ", verts)
         return verts
 
     def get_tris():
@@ -107,6 +118,8 @@ class Custom_robot_mesh():
             drones_distance, theta)
         p0, p1 = [p0[0], p0[1], 0], [p1[0], p1[1], 0]
 
+        print("p0: ", p0)
+        print("p1: ", p1)
         # Set the lowest point of the catenary formed by the 2 previous points
         # as the 3rd point of the catenary
 
@@ -120,8 +133,9 @@ class Custom_robot_mesh():
             drones_distance, theta, L)
 
         if self.MESH_TYPE == mesh.Mesh:
+            filename = "src/drone_path_planning/resources/stl/custom_triangle_robot.stl"
             self.mesh = Custom_robot_mesh.create_3D_triangle_stl(
-                p0, p1, lowest_point, "custom_triangle_robot.stl")
+                p0, p1, lowest_point, filename)
 
         elif self.MESH_TYPE == Fcl_mesh:
             self.mesh = Custom_robot_mesh.create_3D_triangle_fcl_mesh(
@@ -164,5 +178,17 @@ class Custom_robot_mesh():
             drones_distance, theta, L)  # TODO: should try not to  making a new mesh
 
 
+def test_cat_lowest_function(p0, p1, L):
+    d = {"lowest_point": [0, 0, -0.5]}
+    n = SimpleNamespace(**d)
+    return n
+
+
 if __name__ == "__main__":
-    pass
+    print("cwd: ", os.getcwd())
+    drones_distance = 1
+    theta = 0
+    L = 2
+
+    mesh = Custom_robot_mesh(drones_distance, theta, L,
+                             test_cat_lowest_function, mesh_type="stl")
