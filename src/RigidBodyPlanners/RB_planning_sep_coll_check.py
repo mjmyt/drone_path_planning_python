@@ -204,12 +204,15 @@ class PlannerSepCollision:
         plt.show()
 
     def isStateValid(self, state):
+        # calculate seconds ellapsed
+        t0 = rospy.get_time()
         pos = [state[0], state[1], state[2]]
         q = tf.transformations.quaternion_from_euler(0, 0, state[3])
 
         # drones_distance = state[4]
         drones_distance = 2
         theta = 0
+
         self.custom_robot.update_mesh(drones_distance, theta, self.L)
         self.checker.update_robot(self.custom_robot.mesh)
 
@@ -220,6 +223,8 @@ class PlannerSepCollision:
         if (self.states_tried % 100) == 0:
             print("Tried %d states" % self.states_tried)
 
+        dt = rospy.get_time()-t0
+        print("is state valid took", dt*1000, "mseconds")
         return no_collision
 
 
