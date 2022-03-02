@@ -76,7 +76,9 @@ def path_to_pol(path: Path, cfid: int):
     time_col = np.array(pc_pols[0].time_durations)
     matrix[:, -1] = time_col
 
-    np.savetxt("Pol_matrix.csv", matrix, delimiter=",")
+    file_prefix = "/home/marios/thesis_ws/src/drone_path_planning/resources/trajectories/"
+    np.savetxt(file_prefix+"Pol_matrix_{}.csv".format(cfid),
+               matrix, delimiter=",")
 
     pol_to_send.poly_x = list(matrix[:, 0:8].flatten())
     pol_to_send.poly_y = list(matrix[:, 8:16].flatten())
