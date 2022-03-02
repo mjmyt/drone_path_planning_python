@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     br = tf.TransformBroadcaster()
 
-    pos1 = [1, 0, 1]
+    pos1 = [0.5, 0, 0]
     pos2 = pos1.copy()
     pos2[0] = -pos2[0]
 

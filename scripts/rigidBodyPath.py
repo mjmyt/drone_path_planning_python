@@ -139,6 +139,7 @@ def calculate_path_FCL():
     env_mesh_name = "env-scene-ltu-experiment.stl"
 
     robot_mesh_name = "robot-scene-triangle.stl"
+    robot_mesh_name = "custom_triangle_robot.stl"
 
     planner = PlannerSepCollision(env_mesh_name, robot_mesh_name)
 
@@ -176,7 +177,7 @@ if __name__ == "__main__":
     # transform()
 
     # robot marker initialization
-    mesh = "package://drone_path_planning/resources/collada/robot-scene-triangle.dae"
+    mesh = "package://drone_path_planning/resources/collada/custom_triangle_robot.dae"
     rb = MeshMarker(id=0, mesh_path=mesh)
 
     robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
