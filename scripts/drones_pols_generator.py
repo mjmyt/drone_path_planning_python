@@ -69,22 +69,22 @@ def path_to_pol(path: Path, cfid: int):
             coeffs = pol.p  # get coefficients of j-th  polynomial
 
             # add coefficients to matrix
-            matrix[j, 8*i:8*(i+1)] = coeffs.reshape((1, 8))
+            matrix[j, 8*i+1:8*(i+1)+1] = coeffs.reshape((1, 8))
 
     #  dt column
 
     time_col = np.array(pc_pols[0].time_durations)
-    matrix[:, -1] = time_col
+    matrix[:, 0] = time_col
 
     file_prefix = "/home/marios/thesis_ws/src/drone_path_planning/resources/trajectories/"
     np.savetxt(file_prefix+"Pol_matrix_{}.csv".format(cfid),
                matrix, delimiter=",")
 
-    pol_to_send.poly_x = list(matrix[:, 0:8].flatten())
-    pol_to_send.poly_y = list(matrix[:, 8:16].flatten())
-    pol_to_send.poly_z = list(matrix[:, 16:24].flatten())
-    pol_to_send.poly_yaw = list(matrix[:, 24:32].flatten())
-    pol_to_send.durations = list(matrix[:, -1].flatten())
+    pol_to_send.poly_x = list(matrix[:,     0 + 1: 8 + 1].flatten())
+    pol_to_send.poly_y = list(matrix[:,     8 + 1: 16+1].flatten())
+    pol_to_send.poly_z = list(matrix[:,     16+1: 24+1].flatten())
+    pol_to_send.poly_yaw = list(matrix[:,   24+1: 32+1].flatten())
+    pol_to_send.durations = list(matrix[:, 0].flatten())
 
     piece_pols_pub.publish(pol_to_send)
     print("Published polynomial piece...")
