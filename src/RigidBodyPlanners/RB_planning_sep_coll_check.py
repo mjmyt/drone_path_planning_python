@@ -55,6 +55,7 @@ class PlannerSepCollision:
             self.checker = Fcl_checker(env_mesh, robot_mesh)
 
         self.states_tried = 0
+        self.time_sum = 0
         self.L = 3.0  # rope length
         drones_distance = 2  # distance between drones
         theta = 0
@@ -62,7 +63,7 @@ class PlannerSepCollision:
             drones_distance, theta, self.L, cat_lowest_function, mesh_type="fcl")
 
         # x, y, z, yaw , drones_distance
-        self.space = ob.RealVectorStateSpace(4)
+        self.space = ob.RealVectorStateSpace(5)
 
         # set lower and upper bounds
         self.set_bounds()
@@ -76,10 +77,10 @@ class PlannerSepCollision:
         # set problem optimization objective
         self.set_optim_objective()
 
-        print("Space Bounds High:", self.space.getBounds(
-        ).high[0], self.space.getBounds().high[1], self.space.getBounds().high[2])
-        print("Space Bounds Low:", self.space.getBounds(
-        ).low[0], self.space.getBounds().low[1], self.space.getBounds().low[2])
+        print("Space Bounds High:", self.space.getBounds().high[0], self.space.getBounds().high[1], self.space.getBounds().high[2],
+              self.space.getBounds().high[3], self.space.getBounds().high[4])
+        print("Space Bounds Low:", self.space.getBounds().low[0], self.space.getBounds().low[1], self.space.getBounds().low[2],
+              self.space.getBounds().low[3], self.space.getBounds().low[4])
 
     def set_optim_objective(self, objective_class=ob.MechanicalWorkOptimizationObjective):
         self.ss.setOptimizationObjective(
@@ -93,20 +94,20 @@ class PlannerSepCollision:
         self.ss.setup()
 
     def set_bounds(self):
-        bounds = ob.RealVectorBounds(4)
+        bounds = ob.RealVectorBounds(5)
         # set bounds for x, y, z , rotation
         bounds.low[0] = -4.09
         bounds.low[1] = -6
         bounds.low[2] = -2.2
         bounds.low[3] = -pi
-        # bounds.low[4] = self.L * 0.1
+        bounds.low[4] = self.L * 0.1
 
         # set bounds for x, y, z, rotation
         bounds.high[0] = 4.09
         bounds.high[1] = 6
         bounds.high[2] = 2.2
         bounds.high[3] = pi
-        # bounds.high[4] = self.L * 0.9
+        bounds.high[4] = self.L * 0.9
 
         # bounds.setLow(-10)
         # bounds.setHigh(10)
@@ -116,6 +117,8 @@ class PlannerSepCollision:
 
     def save_path(self, file_name="path.txt"):
         # save the path
+        file_name = "src/drone_path_planning/resources/paths/{}".format(
+            file_name)
         print("Saving path to %s" % file_name)
         text_file = open(file_name, "w")
         n = text_file.write(self.path.printAsMatrix())
@@ -131,7 +134,7 @@ class PlannerSepCollision:
         start[2] = start_pose.position.z
         start[3] = tf.transformations.euler_from_quaternion(
             [start_pose.orientation.x, start_pose.orientation.y, start_pose.orientation.z, start_pose.orientation.w])[2]
-        # start[4] = self.L * 0.5
+        start[4] = self.L * 0.5
 
         goal = ob.State(self.space)
         goal[0] = goal_pose.position.x
@@ -139,7 +142,7 @@ class PlannerSepCollision:
         goal[2] = goal_pose.position.z
         goal[3] = tf.transformations.euler_from_quaternion(
             [goal_pose.orientation.x, goal_pose.orientation.y, goal_pose.orientation.z, goal_pose.orientation.w])[2]
-        # goal[4] = self.L * 0.5
+        goal[4] = self.L * 0.5
 
         print("start:", start)
         print("goal:", goal)
@@ -209,8 +212,8 @@ class PlannerSepCollision:
         pos = [state[0], state[1], state[2]]
         q = tf.transformations.quaternion_from_euler(0, 0, state[3])
 
-        # drones_distance = state[4]
-        drones_distance = 2
+        drones_distance = state[4]
+        # drones_distance = 2
         theta = 0
 
         self.custom_robot.update_mesh(drones_distance, theta, self.L)
@@ -220,11 +223,13 @@ class PlannerSepCollision:
 
         no_collision = not self.checker.check_collision()
         self.states_tried += 1
-        if (self.states_tried % 100) == 0:
-            print("Tried %d states" % self.states_tried)
 
         dt = rospy.get_time()-t0
-        # print("is state valid took", dt*1000, "mseconds")
+        self.time_sum += dt
+        if (self.states_tried % 500) == 0:
+            print("Tried %d states" % self.states_tried)
+            print("is state valid average time", self.time_sum /
+                  self.states_tried*1000, "mseconds")
         return no_collision
 
 

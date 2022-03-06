@@ -123,7 +123,8 @@ class Custom_robot_mesh():
         # Set the lowest point of the catenary formed by the 2 previous points
         # as the 3rd point of the catenary
 
-        lowest_point = self.catenary_lowest_function(p0, p1, L).lowest_point
+        # lowest_point = self.catenary_lowest_function(p0, p1, L).lowest_point
+        lowest_point = self.catenary_lowest_function(p0, p1, L)
         lowest_point = [lowest_point[0], lowest_point[2]]
 
         return p0, p1, lowest_point

@@ -20,6 +20,7 @@ from ompl import geometric as og
 
 from catenaries.srv import CatLowestPoint, CatLowestPointResponse
 
+from catenary import catenaries
 
 print("Current working directory:", os.getcwd())
 DRONES_NUMBER = 5
@@ -95,53 +96,14 @@ def getPath(data):
     return path
 
 
-def calculate_path():
-    # planner = RBPlanner()
-
-    planner = PlannerSepCollision()
-    start = [2, -4, 0]
-    goal = [2, 5, 0]
-
-    start_pose = PoseStamped()
-    start_pose.pose.position.x = start[0]
-    start_pose.pose.position.y = start[1]
-    start_pose.pose.position.z = start[2]
-    q = tf.quaternion_from_euler(math.pi/2, 0, 0)
-    start_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
-
-    goal_pose = PoseStamped()
-    goal_pose.pose.position.x = goal[0]
-    goal_pose.pose.position.y = goal[1]
-    goal_pose.pose.position.z = goal[2]
-    q = tf.quaternion_from_euler(math.pi/2, 0, 0)
-    goal_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
-
-    start_pose_transformed = transform(start_pose)
-    goal_pose_transformed = transform(goal_pose)
-
-    print("==============================")
-    print("START POSE:")
-    print(start_pose_transformed)
-    print("==============================")
-    print("GOAL POSE:")
-    print(goal_pose_transformed)
-    print("==============================")
-    planner.set_start_goal(start_pose_transformed.pose,
-                           goal_pose_transformed.pose)
-    planner.set_planner()
-    # planner.set_planner(og.FMT)
-
-    planner.solve(timeout=20.0)
-    # planner.visualize_path()
-
-
 def calculate_path_FCL():
     env_mesh_name = "env-scene-hole.stl"
     env_mesh_name = "env-scene-hole-narrow.stl"
 
     robot_mesh_name = "robot-scene-triangle.stl"
+
     planner = PlannerSepCollision(
-        env_mesh_name, robot_mesh_name, get_cat_lowest_function())
+        env_mesh_name, robot_mesh_name, catenaries.lowest_point_optimized)
 
     start = [-2, 5, 0]
     goal = [-2, -3, 0]
@@ -171,7 +133,7 @@ def calculate_path_FCL():
     # planner.visualize_path()
 
 
-def get_cat_lowest_function():
+def get_cat_lowest_function_service():
     print("Waiting for cat_lowest_function service...")
     rospy.wait_for_service('catenary_lowest_point')
     try:
