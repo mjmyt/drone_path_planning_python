@@ -34,8 +34,12 @@ import os
 print("cwd:", os.getcwd())
 
 
+SHOW_VALID_STATES_CNTR = 0
+
+
 class PlannerSepCollision:
     def __init__(self, env_mesh_name, robot_mesh_name) -> None:
+        self.valid_states_counter = 0
         # env_mesh_name and robot_mesh_name are type of "env-scene-hole.stl"
         try:
             env_mesh = "ros_ws/src/drone_path_planning/resources/stl/{}".format(
@@ -198,6 +202,11 @@ class PlannerSepCollision:
         plt.show()
 
     def isStateValid(self, state):
+        self.valid_states_counter += 1
+
+        if SHOW_VALID_STATES_CNTR and self.valid_states_counter % 100 == 0:
+            print(f"Valid states: {self.valid_states_counter}")
+
         pos = [state[0], state[1], state[2]]
         q = tf.transformations.quaternion_from_euler(0, 0, state[3])
 
