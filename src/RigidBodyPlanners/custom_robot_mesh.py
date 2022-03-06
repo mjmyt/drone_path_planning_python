@@ -49,9 +49,9 @@ class Custom_robot_mesh():
         thickness = 0.3  # thickness of the triangle ,maybe should be a parameter
         offset = 0  # TODO: makes this 0 (used for comapring with thhe old one)
 
-        print("p0: ", p0)
-        print("p1: ", p1)
-        print("p2: ", p2)
+        # print("p0: ", p0)
+        # print("p1: ", p1)
+        # print("p2: ", p2)
         verts = np.zeros((6, 3))
 
         verts[0, :] = [p0[0],  offset + thickness/2, p0[1]]
@@ -61,7 +61,7 @@ class Custom_robot_mesh():
         verts[4, :] = [p1[0],  offset + -thickness/2, p1[1]]
         verts[5, :] = [p2[0],  offset + -thickness/2, p2[1]]
 
-        print("verts: ", verts)
+        # print("verts: ", verts)
         return verts
 
     def get_tris():
@@ -118,8 +118,8 @@ class Custom_robot_mesh():
             drones_distance, theta)
         p0, p1 = [p0[0], p0[1], 0], [p1[0], p1[1], 0]
 
-        print("p0: ", p0)
-        print("p1: ", p1)
+        # print("p0: ", p0)
+        # print("p1: ", p1)
         # Set the lowest point of the catenary formed by the 2 previous points
         # as the 3rd point of the catenary
 

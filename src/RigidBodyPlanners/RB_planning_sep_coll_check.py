@@ -224,7 +224,7 @@ class PlannerSepCollision:
             print("Tried %d states" % self.states_tried)
 
         dt = rospy.get_time()-t0
-        print("is state valid took", dt*1000, "mseconds")
+        # print("is state valid took", dt*1000, "mseconds")
         return no_collision
 
 

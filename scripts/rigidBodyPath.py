@@ -172,6 +172,7 @@ def calculate_path_FCL():
 
 
 def get_cat_lowest_function():
+    print("Waiting for cat_lowest_function service...")
     rospy.wait_for_service('catenary_lowest_point')
     try:
         catenary_lowest = rospy.ServiceProxy(
