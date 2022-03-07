@@ -73,7 +73,7 @@ def main_with_dyn_planning():
     drone2_path_sub = rospy.Subscriber(
         "/drone2Path", Path, drone2.receive_path)
 
-    rate = rospy.Rate(15.0)  # hz
+    rate = rospy.Rate(10.0)  # hz
     while not rospy.is_shutdown():
         try:
             (trans, rot) = listener.lookupTransform(

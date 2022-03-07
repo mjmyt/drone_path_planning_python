@@ -223,7 +223,7 @@ if __name__ == "__main__":
 
     # calculate path
     print("Calculating path...")
-    # calculate_path_FCL()
+    calculate_path_FCL()
 
     # path
     data = load_saved_path()

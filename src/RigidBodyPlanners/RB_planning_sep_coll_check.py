@@ -134,7 +134,7 @@ class PlannerSepCollision:
         start[2] = start_pose.position.z
         start[3] = tf.transformations.euler_from_quaternion(
             [start_pose.orientation.x, start_pose.orientation.y, start_pose.orientation.z, start_pose.orientation.w])[2]
-        start[4] = self.L * 0.5
+        start[4] = self.L * 0.8
 
         goal = ob.State(self.space)
         goal[0] = goal_pose.position.x
