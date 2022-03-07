@@ -64,16 +64,10 @@ catkin_python_setup()
 #   UploadTrajectory.srv
 # )
 
-# add_message_files(
-#   FILES
-#   LogBlock.msg
-#   GenericLogData.msg
-#   FullState.msg
-#   VelocityWorld.msg
-#   TrajectoryPolynomialPiece.msg
-#   Hover.msg
-#   Position.msg
-# )
+add_message_files(
+  FILES
+  rigid_body_dynamic_path.msg
+)
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(

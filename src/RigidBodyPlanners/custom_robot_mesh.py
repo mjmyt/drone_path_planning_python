@@ -37,12 +37,14 @@ class Custom_robot_mesh():
         r = drones_distance/2
         y_offset = 0
         # get the points of the triangle
-        self.p0 = np.array([r * np.cos(theta),  y_offset + r * np.sin(theta)])
-        self.p1 = np.array([-r * np.cos(theta), y_offset + -r * np.sin(theta)])
+        p0 = np.array([r * np.cos(theta),  y_offset + r * np.sin(theta)])
+        p1 = np.array([-r * np.cos(theta), y_offset + -r * np.sin(theta)])
 
         # print(np.linalg.norm(p0 - p1))
+        if self != None:
+            self.p0, self.p1 = p0, p1
 
-        return self.p0, self.p1
+        return p0, p1
 
     def get_triangle_3D_points(p0, p1, p2):
         # Created a matrix with all the vertices needed for the 3D triangle
@@ -180,9 +182,7 @@ class Custom_robot_mesh():
 
 
 def test_cat_lowest_function(p0, p1, L):
-    d = {"lowest_point": [0, 0, -0.5]}
-    n = SimpleNamespace(**d)
-    return n
+    return [0, 0, -0.5]
 
 
 if __name__ == "__main__":

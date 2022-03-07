@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # print working directory
+from drone_path_planning.msg import rigid_body_dynamic_path
 from geometry_msgs.msg import TransformStamped, Quaternion
 import math
 import rospy
@@ -21,6 +22,11 @@ from ompl import geometric as og
 from catenaries.srv import CatLowestPoint, CatLowestPointResponse
 
 from catenary import catenaries
+
+import rospkg
+# get an instance of RosPack with the default search paths
+rospack = rospkg.RosPack()
+
 
 print("Current working directory:", os.getcwd())
 DRONES_NUMBER = 5
@@ -96,6 +102,41 @@ def getPath(data):
     return path
 
 
+def generate_dynamic_path_msg(data):
+    dynamic_path_msg = rigid_body_dynamic_path()
+
+    drones_distances = np.zeros((len(data), 1))
+    drones_angles = np.zeros((len(data), 1))
+
+    path = Path()
+    path.header.frame_id = "world"
+    path.header.stamp = rospy.get_rostime()
+    path.poses = []
+
+    print("Path size:", len(data))
+    for i in range(data.shape[0]):
+        pose = PoseStamped()
+        pose.header.frame_id = "world"
+        pose.header.stamp = rospy.get_rostime()
+
+        pose.pose.position.x = data[i, 0]
+        pose.pose.position.y = data[i, 1]
+        pose.pose.position.z = data[i, 2]
+
+        q = tf.quaternion_from_euler(0, 0, data[i, 3])
+        pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
+        path.poses.append(pose)
+
+        drones_distances[i] = data[i, 4]
+        # drones_angles[i] = data[i, 5]
+
+    dynamic_path_msg.Path = path
+    dynamic_path_msg.drones_distances = drones_distances
+    dynamic_path_msg.drones_angles = drones_angles
+
+    return dynamic_path_msg
+
+
 def calculate_path_FCL():
     env_mesh_name = "env-scene-hole.stl"
     env_mesh_name = "env-scene-hole-narrow.stl"
@@ -146,6 +187,23 @@ def get_cat_lowest_function_service():
     return catenary_lowest
 
 
+def load_saved_path(filename='path.txt'):
+    try:
+        # get the file path of droen_path_planning package
+        path_file = rospack.get_path(
+            'drone_path_planning')+'/resources/paths/{}'.format(filename)
+        data = np.loadtxt(path_file)
+    except Exception as e:
+        print("Error:", e)
+        print("Trying crazyswarm/{}...".format(filename))
+        try:
+            data = np.loadtxt('crazyswarm/{}'.format(filename))
+        except Exception as e:
+            print("No path file found")
+            exit(0)
+    return data
+
+
 if __name__ == "__main__":
 
     rospy.init_node("rb_path_planning")
@@ -154,38 +212,40 @@ if __name__ == "__main__":
     # robot marker initialization
     mesh = "package://drone_path_planning/resources/collada/robot-scene-triangle.dae"
     rb = MeshMarker(id=0, mesh_path=mesh)
-
     robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
 
     # Environment marker initialization
     mesh = "package://drone_path_planning/resources/collada/env-scene-hole-narrow.dae"
     env = MeshMarker(id=1, mesh_path=mesh)
-    env.color.r = 1
-    env.color.g = 0
-    env.color.b = 0
+    env.color.r, env.color.g, env.color.b = 1, 0, 0
     env.updatePose([0, 0, 0], [0, 0, 0, 1])
     envPub = rospy.Publisher('rb_environment',  Marker, queue_size=10)
 
     # calculate path
     print("Calculating path...")
-    # calculate_path()
-    calculate_path_FCL()
+    # calculate_path_FCL()
 
     # path
-    try:
-        data = np.loadtxt('path.txt')
-    except Exception as e:
-        print("Error:", e)
-        print("Trying crazyswarm/path.txt...")
-        try:
-            data = np.loadtxt('crazyswarm/path.txt')
-        except Exception as e:
-            print("No path file found")
-            exit(0)
+    data = load_saved_path()
 
-    path = getPath(data)
+    # generate dynamic path msg
+    # path = getPath(data)
+    dynamic_path = generate_dynamic_path_msg(data)
+    print("Loaded and generated dynamic path")
+
     trajPub = rospy.Publisher('rigiBodyPath',  Path, queue_size=10)
-    trajPub.publish(path)
+    trajPub.publish(dynamic_path.Path)
+
+    dynamic_path_pub = rospy.Publisher(
+        'dynamicRigiBodyPath', rigid_body_dynamic_path, queue_size=10)
+
+    print("Waiting for connections to the  /dynamicRigiBodyPath topic...")
+    while dynamic_path_pub.get_num_connections() == 0:
+        pass
+
+    print("Publishing dynamic path...")
+    dynamic_path_pub.publish(dynamic_path)
+    print("Published dynamic path!")
 
     # transform
     br = tf.TransformBroadcaster()
@@ -202,10 +262,13 @@ if __name__ == "__main__":
         else:
             i += 1
 
-        rb.updatePose(path.poses[i].pose.position,
-                      path.poses[i].pose.orientation, frame="world")
+        # rb.updatePose(path.poses[i].pose.position,
+        #               path.poses[i].pose.orientation, frame="world")
 
-        # rb_transformed = transform(rb)
+        rb.updatePose(dynamic_path.Path.poses[i].pose.position,
+                      dynamic_path.Path.poses[i].pose.orientation, frame="world")
+
+        # rb_transformed = transform(rb )
 
         # print("robot pos:", rb_transformed.pose.position.x,
         #   rb_transformed.pose.position.y, rb_transformed.pose.position.z, " orient:", rb_transformed.pose.orientation.x, rb_transformed.pose.orientation.y, rb_transformed.pose.orientation.z, rb_transformed.pose.orientation.w)
@@ -220,6 +283,7 @@ if __name__ == "__main__":
                          "rigid_body", "world")
 
         envPub.publish(env)
-        trajPub.publish(path)
+        # trajPub.publish(path)
+        trajPub.publish(dynamic_path.Path)
 
         rate.sleep()
