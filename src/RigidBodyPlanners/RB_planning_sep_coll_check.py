@@ -62,8 +62,8 @@ class PlannerSepCollision:
         self.custom_robot = Custom_robot_mesh(
             drones_distance, theta, self.L, cat_lowest_function, mesh_type="fcl")
 
-        # x, y, z, yaw , drones_distance
-        self.space = ob.RealVectorStateSpace(5)
+        # x, y, z, yaw , drones_distance, drones_angles
+        self.space = ob.RealVectorStateSpace(6)
 
         # set lower and upper bounds
         self.set_bounds()
@@ -94,13 +94,14 @@ class PlannerSepCollision:
         self.ss.setup()
 
     def set_bounds(self):
-        bounds = ob.RealVectorBounds(5)
+        bounds = ob.RealVectorBounds(6)
         # set bounds for x, y, z , rotation
         bounds.low[0] = -4.09
         bounds.low[1] = -6
         bounds.low[2] = -2.2
         bounds.low[3] = -pi
         bounds.low[4] = self.L * 0.1
+        bounds.low[5] = -pi/4
 
         # set bounds for x, y, z, rotation
         bounds.high[0] = 4.09
@@ -108,6 +109,7 @@ class PlannerSepCollision:
         bounds.high[2] = 2.2
         bounds.high[3] = pi
         bounds.high[4] = self.L * 0.9
+        bounds.high[5] = pi/4
 
         # bounds.setLow(-10)
         # bounds.setHigh(10)
@@ -135,6 +137,7 @@ class PlannerSepCollision:
         start[3] = tf.transformations.euler_from_quaternion(
             [start_pose.orientation.x, start_pose.orientation.y, start_pose.orientation.z, start_pose.orientation.w])[2]
         start[4] = self.L * 0.8
+        start[5] = 0
 
         goal = ob.State(self.space)
         goal[0] = goal_pose.position.x
@@ -143,6 +146,7 @@ class PlannerSepCollision:
         goal[3] = tf.transformations.euler_from_quaternion(
             [goal_pose.orientation.x, goal_pose.orientation.y, goal_pose.orientation.z, goal_pose.orientation.w])[2]
         goal[4] = self.L * 0.5
+        goal[5] = 0
 
         print("start:", start)
         print("goal:", goal)
