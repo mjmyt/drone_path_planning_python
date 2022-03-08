@@ -20,19 +20,21 @@ print("Current working directory:", os.getcwd())
 
 
 drone_positions = [
-    [1, 0, 1],
-    [-1, 0, 1]
+    [0.5, 0, 0],
+    [-0.5, 0, 0]
 ]
 
 
 drone_pose = PoseStamped()
 drone_pose.header.frame_id = 'rb_path'
-drone_pose.pose.position = Point(1, 0, 1)
+drone_pose.pose.position = Point(
+    drone_positions[0][0], drone_positions[0][1], drone_positions[0][2])
 drone_pose.pose.orientation = Quaternion(0, 0, 0, 1)
 
 drone_pose2 = PoseStamped()
 drone_pose2.header.frame_id = 'rb_path'
-drone_pose2.pose.position = Point(-1, 0, 1)
+drone_pose2.pose.position = Point(
+    drone_positions[1][0], drone_positions[1][1], drone_positions[1][2])
 drone_pose2.pose.orientation = Quaternion(0, 0, 0, 1)
 
 

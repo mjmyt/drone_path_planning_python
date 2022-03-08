@@ -5,12 +5,11 @@ from click import echo_via_pager
 from stl import mesh
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits import mplot3d
-from geometry_msgs.msg import Point, PoseStamped, Quaternion
+from geometry_msgs.msg import Point, PoseStamped, Quaternion, Pose
 import tf
 import numpy as np
 import matplotlib.pyplot as plt
 from math import pi
-import rospy
 
 try:
     from ompl import base as ob
@@ -35,16 +34,45 @@ import os
 print("cwd:", os.getcwd())
 
 
+SHOW_VALID_STATES_CNTR = 0
+
+
 class PlannerSepCollision:
-    def __init__(self) -> None:
-        self.space = ob.SE3StateSpace()
+    def __init__(self, env_mesh_name, robot_mesh_name) -> None:
+        self.valid_states_counter = 0
+        # env_mesh_name and robot_mesh_name are type of "env-scene-hole.stl"
+        try:
+            env_mesh = "ros_ws/src/drone_path_planning/resources/stl/{}".format(
+                env_mesh_name)
+            robot_mesh = "ros_ws/src/drone_path_planning/resources/stl/{}".format(
+                robot_mesh_name)
+
+            self.checker = Fcl_checker(env_mesh, robot_mesh)
+
+            # try:
+            #     checker = Fcl_checker(env_mesh, robot_mesh)
+            # except:
+            #     prefix = "crazyswarm/"
+            #     checker = Fcl_checker(
+            #         prefix+env_mesh, prefix + robot_mesh)
+        except:
+            print("cwd:", os.getcwd())
+            env_mesh = r"/home/marios/thesis_ws/src/drone_path_planning/resources/stl/{}".format(
+                env_mesh_name)
+            robot_mesh = r"/home/marios/thesis_ws/src/drone_path_planning/resources/stl/{}".format(
+                robot_mesh_name)
+
+            self.checker = Fcl_checker(env_mesh, robot_mesh)
+
+        self.space = ob.RealVectorStateSpace(4)
+
         # set lower and upper bounds
         self.set_bounds()
 
         self.ss = og.SimpleSetup(self.space)
         # set State Validity Checker function
         self.ss.setStateValidityChecker(
-            ob.StateValidityCheckerFn(isStateValid))
+            ob.StateValidityCheckerFn(self.isStateValid))
 
         self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.001)
         # set problem optimization objective
@@ -67,14 +95,18 @@ class PlannerSepCollision:
         self.ss.setup()
 
     def set_bounds(self):
-        bounds = ob.RealVectorBounds(3)
-        bounds.low[0] = -4.09
-        bounds.low[1] = -6
-        bounds.low[2] = -2.2
+        bounds = ob.RealVectorBounds(4)
+        # set bounds for x, y, z , rotation
+        bounds.low[0] = -2.2
+        bounds.low[1] = 2.8
+        bounds.low[2] = 0.5
+        bounds.low[3] = -pi
 
-        bounds.high[0] = 4.09
-        bounds.high[1] = 6
-        bounds.high[2] = 2.2
+        # set bounds for x, y, z, rotation
+        bounds.high[0] = 2.2
+        bounds.high[1] = 5.0
+        bounds.high[2] = 2.5
+        bounds.high[3] = pi
 
         # bounds.setLow(-10)
         # bounds.setHigh(10)
@@ -89,26 +121,26 @@ class PlannerSepCollision:
         n = text_file.write(self.path.printAsMatrix())
         text_file.close()
 
-    def set_start_goal(self, start_pose, goal_pose, transform=False):
+    def set_start_goal(self, start_pose: Pose, goal_pose: Pose, transform=False):
 
         # define start state
         start = ob.State(self.space)
-        start().setX(start_pose.position.x)
-        start().setY(start_pose.position.y)
-        start().setZ(start_pose.position.z)
-        start().rotation().x = start_pose.orientation.x
-        start().rotation().y = start_pose.orientation.y
-        start().rotation().z = start_pose.orientation.z
-        start().rotation().w = start_pose.orientation.w
+
+        start[0] = start_pose.position.x
+        start[1] = start_pose.position.y
+        start[2] = start_pose.position.z
+        start[3] = tf.transformations.euler_from_quaternion(
+            [start_pose.orientation.x, start_pose.orientation.y, start_pose.orientation.z, start_pose.orientation.w])[2]
 
         goal = ob.State(self.space)
-        goal().setX(goal_pose.position.x)
-        goal().setY(goal_pose.position.y)
-        goal().setZ(goal_pose.position.z)
-        goal().rotation().x = goal_pose.orientation.x
-        goal().rotation().y = goal_pose.orientation.y
-        goal().rotation().z = goal_pose.orientation.z
-        goal().rotation().w = goal_pose.orientation.w
+        goal[0] = goal_pose.position.x
+        goal[1] = goal_pose.position.y
+        goal[2] = goal_pose.position.z
+        goal[3] = tf.transformations.euler_from_quaternion(
+            [goal_pose.orientation.x, goal_pose.orientation.y, goal_pose.orientation.z, goal_pose.orientation.w])[2]
+
+        print("start:", start)
+        print("goal:", goal)
 
         self.ss.setStartAndGoalStates(start, goal)
         # return the start & goal states
@@ -169,64 +201,39 @@ class PlannerSepCollision:
 
         plt.show()
 
+    def isStateValid(self, state):
+        self.valid_states_counter += 1
 
-try:
-    env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
-    robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
-    try:
-        checker = Fcl_checker(env_mesh_name, robot_mesh_name)
-    except:
-        prefix = "crazyswarm/"
-        checker = Fcl_checker(prefix+env_mesh_name, prefix + robot_mesh_name)
-except:
-    print("cwd:", os.getcwd())
-    env_mesh_name = "src/drone_path_planning/resources/stl/env-scene-hole.stl"
-    robot_mesh_name = "src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
+        if SHOW_VALID_STATES_CNTR and self.valid_states_counter % 100 == 0:
+            print(f"Valid states: {self.valid_states_counter}")
 
-    checker = Fcl_checker(env_mesh_name, robot_mesh_name)
+        pos = [state[0], state[1], state[2]]
+        q = tf.transformations.quaternion_from_euler(0, 0, state[3])
 
+        self.checker.set_robot_transform(pos, q)
+        no_collision = not self.checker.check_collision()
+        # print("No collision:", no_collision)
 
-def isStateValid(state):
-    # Some arbitrary condition on the state (note that thanks to
-    # dynamic type checking we can just call getX() and do not need
-    # to convert state to an SE2State.)
-    t0 = rospy.get_time()
-    pos = [state.getX(), state.getY(), state.getZ()]
-    q = [state.rotation().x, state.rotation().y,
-         state.rotation().z, state.rotation().w]
+        # euler = tf.euler_from_quaternion(q)
+        # print("Euler:", euler[0], euler[1], euler[2])
 
-    checker.set_robot_transform(pos, q)
-    no_collision = not checker.check_collision()
-    # print("No collision:", no_collision)
-
-    euler = tf.euler_from_quaternion(q)
-    # print("Euler:", euler[0], euler[1], euler[2])
-
-    max_angle = np.deg2rad(10)
-
-    valid_rotation_arr = []
-    if isStateValid.counter == 0:
-        print("First state:")
-        print(np.rad2deg(euler))
-        # input()
-        isStateValid.counter += 1
-
-    valid_rotation_arr.append(isBetween(euler[0], -max_angle, max_angle))
-    valid_rotation_arr.append(isBetween(euler[1], -max_angle, max_angle))
-    # valid_rotation_arr.append(isBetween(euler[2], -max_angle, max_angle))
-
-    valid_rotation = all(valid_rotation_arr)
-
-    if isStateValid.counter % 100 == 0:
-        print("Counter:", isStateValid.counter)
-    isStateValid.counter += 1
-    dt = rospy.get_time()-t0
-    print("is state valid took ", dt*100, "mseconds")
-
-    return no_collision and valid_rotation
+        return no_collision
 
 
-isStateValid.counter = 0
+# try:
+#     env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
+#     robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
+#     try:
+#         checker = Fcl_checker(env_mesh_name, robot_mesh_name)
+#     except:
+#         prefix = "crazyswarm/"
+#         checker = Fcl_checker(prefix+env_mesh_name, prefix + robot_mesh_name)
+# except:
+#     print("cwd:", os.getcwd())
+#     env_mesh_name = "src/drone_path_planning/resources/stl/env-scene-hole.stl"
+#     robot_mesh_name = "src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
+
+#     checker = Fcl_checker(env_mesh_name, robot_mesh_name)
 
 
 def isBetween(x, min, max):
@@ -235,7 +242,9 @@ def isBetween(x, min, max):
 
 if __name__ == "__main__":
     # checker.visualize()
-    planner = PlannerSepCollision()
+    env_mesh_name = "env-scene-hole.stl"
+    robot_mesh_name = "robot-scene-triangle.stl"
+    planner = PlannerSepCollision(env_mesh_name, robot_mesh_name)
 
     start_pos = [-4, -2, 2]
     goal_pos = [4, 2, 2]
