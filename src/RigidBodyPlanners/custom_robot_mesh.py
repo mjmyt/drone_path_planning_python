@@ -5,7 +5,7 @@ import numpy as np
 import fcl
 import os
 from types import SimpleNamespace
-
+from math import pi
 try:
     from .fcl_checker import Fcl_mesh
 except:
@@ -48,7 +48,7 @@ class Custom_robot_mesh():
 
     def get_triangle_3D_points(p0, p1, p2):
         # Created a matrix with all the vertices needed for the 3D triangle
-        thickness = 0.3  # thickness of the triangle ,maybe should be a parameter
+        thickness = 0.2  # thickness of the triangle ,maybe should be a parameter
         offset = 0  # TODO: makes this 0 (used for comapring with thhe old one)
 
         # print("p0: ", p0)
@@ -188,7 +188,7 @@ def test_cat_lowest_function(p0, p1, L):
 if __name__ == "__main__":
     print("cwd: ", os.getcwd())
     drones_distance = 1
-    theta = 0
+    theta = pi/4
     L = 2
 
     mesh = Custom_robot_mesh(drones_distance, theta, L,

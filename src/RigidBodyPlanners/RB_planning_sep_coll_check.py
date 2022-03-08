@@ -56,7 +56,7 @@ class PlannerSepCollision:
 
         self.states_tried = 0
         self.time_sum = 0
-        self.L = 3.0  # rope length
+        self.L = 3.0  # rope length #TODO:make this a ROS parameter
         drones_distance = 2  # distance between drones
         theta = 0
         self.custom_robot = Custom_robot_mesh(
@@ -98,10 +98,10 @@ class PlannerSepCollision:
         # set bounds for x, y, z , rotation
         bounds.low[0] = -4.09
         bounds.low[1] = -6
-        bounds.low[2] = -2.2
+        bounds.low[2] = -1.5
         bounds.low[3] = -pi
-        bounds.low[4] = self.L * 0.1
-        bounds.low[5] = -pi/4
+        bounds.low[4] = self.L * 0.2
+        bounds.low[5] = -pi/3
 
         # set bounds for x, y, z, rotation
         bounds.high[0] = 4.09
@@ -109,7 +109,7 @@ class PlannerSepCollision:
         bounds.high[2] = 2.2
         bounds.high[3] = pi
         bounds.high[4] = self.L * 0.9
-        bounds.high[5] = pi/4
+        bounds.high[5] = pi/3
 
         # bounds.setLow(-10)
         # bounds.setHigh(10)
@@ -175,6 +175,11 @@ class PlannerSepCollision:
         else:
             print("No solution found")
 
+        solution_states = self.path.getStates()
+        print("Checking vaildity of the solution states...")
+        for state in solution_states:
+            print("[ %.2f %.2f %.2f %.2f %.2f %.2f deg ] :" % (state[0], state[1],
+                  state[2], state[3], state[4], np.rad2deg(state[5])), self.isStateValid(state))
         return solved
 
     def visualize_path(self, path_file="path.txt"):
@@ -217,8 +222,7 @@ class PlannerSepCollision:
         q = tf.transformations.quaternion_from_euler(0, 0, state[3])
 
         drones_distance = state[4]
-        # drones_distance = 2
-        theta = 0
+        theta = state[5]
 
         self.custom_robot.update_mesh(drones_distance, theta, self.L)
         self.checker.update_robot(self.custom_robot.mesh)
@@ -231,9 +235,10 @@ class PlannerSepCollision:
         dt = rospy.get_time()-t0
         self.time_sum += dt
         if (self.states_tried % 500) == 0:
-            print("Tried %d states" % self.states_tried)
-            print("is state valid average time", self.time_sum /
-                  self.states_tried*1000, "mseconds")
+            print("Tried {} states --> average time: {} msec".format(self.states_tried,
+                  self.time_sum / self.states_tried*1000), end="")
+            print("\r", end="")
+
         return no_collision
 
 

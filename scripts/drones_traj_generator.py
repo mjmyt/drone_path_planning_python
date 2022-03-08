@@ -91,7 +91,10 @@ def dynamic_transform(path, inverse=False) -> PoseStamped:
 
         buffer_core.set_transform(ts2, "default_authority")
 
-        # Get drones positions from the distnace and angle
+        # Get drones positions from the distance and angle
+        # print("Getting drones formation distance: %.2f angle %.2f deg ..." %
+        #       (path.drones_distances[i], np.rad2deg(path.drones_angles[i])))
+
         p0, p1 = Custom_robot_mesh.drones_formation_2_triangle_points(
             None, path.drones_distances[i], path.drones_angles[i])
 

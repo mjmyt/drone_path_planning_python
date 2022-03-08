@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # print working directory
+import sys
 from drone_path_planning.msg import rigid_body_dynamic_path
 from geometry_msgs.msg import TransformStamped, Quaternion
 import math
@@ -128,7 +129,7 @@ def generate_dynamic_path_msg(data):
         path.poses.append(pose)
 
         drones_distances[i] = data[i, 4]
-        # drones_angles[i] = data[i, 5]
+        drones_angles[i] = data[i, 5]
 
     dynamic_path_msg.Path = path
     dynamic_path_msg.drones_distances = drones_distances
@@ -137,11 +138,12 @@ def generate_dynamic_path_msg(data):
     return dynamic_path_msg
 
 
-def calculate_path_FCL():
-    env_mesh_name = "env-scene-hole.stl"
-    env_mesh_name = "env-scene-hole-narrow.stl"
+def calculate_path_FCL(robot_mesh_name, env_mesh_name):
+    robot_mesh_name += ".stl"
+    env_mesh_name += ".stl"
 
-    robot_mesh_name = "robot-scene-triangle.stl"
+    print("robot_mesh_name:", robot_mesh_name)
+    print("env_mesh_name:", env_mesh_name)
 
     planner = PlannerSepCollision(
         env_mesh_name, robot_mesh_name, catenaries.lowest_point_optimized)
@@ -170,7 +172,7 @@ def calculate_path_FCL():
     planner.set_planner()
     # planner.set_planner(og.FMT)
 
-    planner.solve(timeout=40.0)
+    path = planner.solve(timeout=200.0)
     # planner.visualize_path()
 
 
@@ -207,15 +209,19 @@ def load_saved_path(filename='path.txt'):
 if __name__ == "__main__":
 
     rospy.init_node("rb_path_planning")
-    # transform()
+
+    robot_mesh_name = "robot-scene-triangle"
+    env_mesh_name = "env-scene-inclined"
 
     # robot marker initialization
-    mesh = "package://drone_path_planning/resources/collada/robot-scene-triangle.dae"
+    mesh = "package://drone_path_planning/resources/collada/{}.dae".format(
+        robot_mesh_name)
     rb = MeshMarker(id=0, mesh_path=mesh)
     robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
 
     # Environment marker initialization
-    mesh = "package://drone_path_planning/resources/collada/env-scene-hole-narrow.dae"
+    mesh = "package://drone_path_planning/resources/collada/{}.dae".format(
+        env_mesh_name)
     env = MeshMarker(id=1, mesh_path=mesh)
     env.color.r, env.color.g, env.color.b = 1, 0, 0
     env.updatePose([0, 0, 0], [0, 0, 0, 1])
@@ -223,7 +229,7 @@ if __name__ == "__main__":
 
     # calculate path
     print("Calculating path...")
-    calculate_path_FCL()
+    calculate_path_FCL(robot_mesh_name, env_mesh_name)
 
     # path
     data = load_saved_path()
@@ -241,7 +247,8 @@ if __name__ == "__main__":
 
     print("Waiting for connections to the  /dynamicRigiBodyPath topic...")
     while dynamic_path_pub.get_num_connections() == 0:
-        pass
+        if rospy.is_shutdown():
+            sys.exit()
 
     print("Publishing dynamic path...")
     dynamic_path_pub.publish(dynamic_path)

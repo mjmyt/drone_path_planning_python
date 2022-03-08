@@ -31,12 +31,21 @@ class Fcl_mesh():
         """
         Create an indexed triangle mesh from a list of vertices and a list of vectors.
         """
+        # remove duplicates from vertices not sure if this is correct
+        #vertices = np.unique(vertices, axis=0)
         # Create indexed triangles
         tris = np.zeros([len(vectors),  3])
         for i, vec in enumerate(vectors):
             for j, p in enumerate(vec):
                 index = np.where(np.all(p == vertices, axis=1))
-                tris[i][j] = index[0]
+                try:
+                    tris[i][j] = index[0]
+                except Exception as e:
+                    print("index: ", index)
+                    print("p: ", p)
+                    print("vertices: ", vertices)
+                    print(e)
+                    tris[i][j] = index[0][0]
 
         self.tris = tris
         return tris
