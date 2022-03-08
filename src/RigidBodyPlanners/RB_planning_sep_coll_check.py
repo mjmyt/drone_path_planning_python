@@ -6,6 +6,7 @@ from stl import mesh
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits import mplot3d
 from geometry_msgs.msg import Point, PoseStamped, Quaternion, Pose
+import rospy
 import tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -39,7 +40,8 @@ SHOW_VALID_STATES_CNTR = 0
 
 class PlannerSepCollision:
     def __init__(self, env_mesh_name, robot_mesh_name) -> None:
-        self.valid_states_counter = 0
+        self.time_sum = 0
+        self.states_tried = 0
         # env_mesh_name and robot_mesh_name are type of "env-scene-hole.stl"
         try:
             env_mesh = "ros_ws/src/drone_path_planning/resources/stl/{}".format(
@@ -166,6 +168,8 @@ class PlannerSepCollision:
         else:
             print("No solution found")
 
+        print("Tried {} states --> average time: {} msec".format(self.states_tried,
+              self.time_sum / self.states_tried*1000))
         return solved
 
     def visualize_path(self, path_file="path.txt"):
@@ -202,38 +206,24 @@ class PlannerSepCollision:
         plt.show()
 
     def isStateValid(self, state):
-        self.valid_states_counter += 1
-
-        if SHOW_VALID_STATES_CNTR and self.valid_states_counter % 100 == 0:
-            print(f"Valid states: {self.valid_states_counter}")
+        t0 = rospy.get_time()
 
         pos = [state[0], state[1], state[2]]
         q = tf.transformations.quaternion_from_euler(0, 0, state[3])
 
         self.checker.set_robot_transform(pos, q)
         no_collision = not self.checker.check_collision()
-        # print("No collision:", no_collision)
 
-        # euler = tf.euler_from_quaternion(q)
-        # print("Euler:", euler[0], euler[1], euler[2])
+        dt = rospy.get_time()-t0
+        self.time_sum += dt
+        self.states_tried += 1
+
+        if (SHOW_VALID_STATES_CNTR and self.states_tried % 1000) == 0:
+            print("Tried {} states --> average time: {} msec".format(self.states_tried,
+                  self.time_sum / self.states_tried*1000), end="")
+            print("\r", end="")
 
         return no_collision
-
-
-# try:
-#     env_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/env-scene-hole.stl"
-#     robot_mesh_name = "ros_ws/src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
-#     try:
-#         checker = Fcl_checker(env_mesh_name, robot_mesh_name)
-#     except:
-#         prefix = "crazyswarm/"
-#         checker = Fcl_checker(prefix+env_mesh_name, prefix + robot_mesh_name)
-# except:
-#     print("cwd:", os.getcwd())
-#     env_mesh_name = "src/drone_path_planning/resources/stl/env-scene-hole.stl"
-#     robot_mesh_name = "src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
-
-#     checker = Fcl_checker(env_mesh_name, robot_mesh_name)
 
 
 def isBetween(x, min, max):
