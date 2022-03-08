@@ -9,7 +9,8 @@ except ImportError:
     # subdirectory of the parent directory called "py-bindings."
     from os.path import abspath, dirname, join
     import sys
-    sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'py-bindings'))
+    sys.path.insert(
+        0, join(dirname(dirname(abspath(__file__))), 'py-bindings'))
     from ompl import util as ou
     from ompl import base as ob
     from ompl import geometric as og
@@ -112,7 +113,8 @@ def isStateValid(state):
     euler = tft.euler_from_quaternion(q)
 
     theta = degrees(euler[0])
-    cond_0 = isBetween(theta, -180, -170) or isBetween(theta, -90, -80) or isBetween(theta, 170, 180)
+    cond_0 = isBetween(theta, -180, -170) or isBetween(theta, -
+                                                       90, -80) or isBetween(theta, 170, 180)
 
     valid_rotation_arr.append(cond_0)
     # valid_rotation_arr.append(isBetween(euler[1], -max_angle, max_angle))
@@ -122,7 +124,13 @@ def isStateValid(state):
     # print("Validating:", pos[0], pos[1], pos[2])
     # print("Euler validation:", tft.euler_from_quaternion(q))
     # print("State Valid:", no_collision)
+    if isStateValid.counter % 100 == 0:
+        print("State Valid:", no_collision)
+
     return no_collision and valid_rotation
+
+
+isStateValid.counter = 0
 
 
 def isBetween(x, min, max):
@@ -186,7 +194,8 @@ def plan(samplerIndex):
     si = ss.getSpaceInformation()
     print(si)
     print("using my sampler")
-    si.setValidStateSamplerAllocator(ob.ValidStateSamplerAllocator(allocMyValidStateSampler))
+    si.setValidStateSamplerAllocator(
+        ob.ValidStateSamplerAllocator(allocMyValidStateSampler))
 
     # create a planner for the defined space
     planner = og.RRT(si)
