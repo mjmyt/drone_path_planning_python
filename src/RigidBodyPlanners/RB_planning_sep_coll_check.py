@@ -74,8 +74,15 @@ class PlannerSepCollision:
             ob.StateValidityCheckerFn(self.isStateValid))
 
         self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.01)
+
         # set problem optimization objective
+        # all available ob optimization objectives (maybe there are some more)
+        # I can also make my own
+        optimizations = ["MechanicalWorkOptimizationObjective",
+                         "MultiOptimizationObjective", "PathLengthOptimizationObjective"]
+
         self.set_optim_objective()
+        # self.set_optim_objective(ob.PathLengthOptimizationObjective)
 
         print("Space Bounds High:", self.space.getBounds().high[0], self.space.getBounds().high[1], self.space.getBounds().high[2],
               self.space.getBounds().high[3], self.space.getBounds().high[4])
@@ -148,12 +155,25 @@ class PlannerSepCollision:
         goal[4] = self.L * 0.5
         goal[5] = 0
 
-        print("start:", start)
-        print("goal:", goal)
+        print("==============================")
+        print("START POSE:")
+        self.print_state_data(start)
+        print("==============================")
+        print("GOAL POSE:")
+        self.print_state_data(goal)
+        print("==============================")
 
         self.ss.setStartAndGoalStates(start, goal)
         # return the start & goal states
         return start, goal
+
+    def print_state_data(self, state):
+        print("\t x: %.2f" % state[0])
+        print("\t y: %.2f" % state[1])
+        print("\t z: %.2f" % state[2])
+        print("\t yaw: %.2f" % np.rad2deg(state[3]), "deg")
+        print("\t drones distance: %.2f" % state[4])
+        print("\t drones angle: %.2f" % np.rad2deg(state[5]), "deg")
 
     def solve(self, timeout=15.0):
         #

@@ -165,18 +165,20 @@ def calculate_path_FCL(robot_mesh_name, env_mesh_name):
     q = tf.quaternion_from_euler(0, 0, 0)
     goal_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
 
-    print("==============================")
-    print("START POSE:")
-    print(start_pose)
-    print("==============================")
-    print("GOAL POSE:")
-    print(goal_pose)
-    print("==============================")
     planner.set_start_goal(start_pose.pose, goal_pose.pose)
+    # list of all available og planners (maybe some are missing)
+    planners = ['ABITstar', 'AITstar', 'BFMT', 'BITstar', 'BKPIECE1', 'BiEST',
+                'EST', 'FMT', 'InformedRRTstar', 'KPIECE1', 'KStarStrategy', 'KStrategy', 'LBKPIECE1', 'LBTRRT', 'LazyLBTRRT',
+                'LazyPRM', 'LazyPRMstar', 'LazyRRT', 'NearestNeighbors', 'NearestNeighborsLinear', 'NumNeighborsFn',
+                'PDST', 'PRM', 'PRMstar', 'ProjEST',
+                'QRRT', 'RRT', 'RRTConnect', 'RRTXstatic', 'RRTsharp', 'RRTstar', 'SBL', 'SORRTstar', 'SPARS', 'SPARStwo', 'SST']
+
     planner.set_planner()
     # planner.set_planner(og.FMT)
+    # planner.set_planner(og.RRTConnect)
+    # planner.set_planner(og.InformedRRTstar)
 
-    path = planner.solve(timeout=200.0)
+    path = planner.solve(timeout=60.0)
     # planner.visualize_path()
 
 
