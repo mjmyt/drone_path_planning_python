@@ -15,6 +15,11 @@ except:
 class Custom_robot_mesh():
     def __init__(self, drones_distance, theta, L, catenary_lowest_function, mesh_type=None) -> None:
         self.catenary_lowest_function = catenary_lowest_function
+        self.safe_distances = False
+        self.L = L
+
+        self.enable_safe_distances(
+            drones_distance=0.3, lowest_point_safety_distance=0.3)
 
         if mesh_type == None:
             print("mesh_type is None")
@@ -25,6 +30,11 @@ class Custom_robot_mesh():
             self.MESH_TYPE = Fcl_mesh
 
         self.create_custom_robot(drones_distance, theta, L)
+
+    def enable_safe_distances(self, drones_distance, lowest_point_safety_distance):
+        self.safe_distances = True
+        self.drones_safety_distance = drones_distance
+        self.lowest_point_safety_distance = lowest_point_safety_distance
 
     def drones_formation_2_triangle_points(self, drones_distance, theta):
         """
@@ -118,6 +128,7 @@ class Custom_robot_mesh():
         # Get first 2 points based on drones distance and theta
         p0, p1 = self.drones_formation_2_triangle_points(
             drones_distance, theta)
+
         p0, p1 = [p0[0], p0[1], 0], [p1[0], p1[1], 0]
 
         # print("p0: ", p0)
@@ -128,6 +139,12 @@ class Custom_robot_mesh():
         # lowest_point = self.catenary_lowest_function(p0, p1, L).lowest_point
         lowest_point = self.catenary_lowest_function(p0, p1, L)
         lowest_point = [lowest_point[0], lowest_point[2]]
+
+        # safe distances calculations
+        if self.enable_safe_distances:
+            p0[0] += self.drones_safety_distance
+            p1[0] += -self.drones_safety_distance
+            lowest_point[1] -= self.lowest_point_safety_distance
 
         return p0, p1, lowest_point
 
@@ -188,7 +205,7 @@ def test_cat_lowest_function(p0, p1, L):
 if __name__ == "__main__":
     print("cwd: ", os.getcwd())
     drones_distance = 1
-    theta = pi/4
+    theta = 0
     L = 2
 
     mesh = Custom_robot_mesh(drones_distance, theta, L,
