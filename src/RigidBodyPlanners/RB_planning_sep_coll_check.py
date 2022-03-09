@@ -73,7 +73,7 @@ class PlannerSepCollision:
         self.ss.setStateValidityChecker(
             ob.StateValidityCheckerFn(self.isStateValid))
 
-        self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.001)
+        self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.01)
         # set problem optimization objective
         self.set_optim_objective()
 
@@ -176,10 +176,11 @@ class PlannerSepCollision:
             print("No solution found")
 
         solution_states = self.path.getStates()
-        print("Checking vaildity of the solution states...")
-        for state in solution_states:
-            print("[ %.2f %.2f %.2f %.2f %.2f %.2f deg ] :" % (state[0], state[1],
-                  state[2], state[3], state[4], np.rad2deg(state[5])), self.isStateValid(state))
+
+        # print("Checking vaildity of the solution states...")
+        # for state in solution_states:
+        #     print("[ %.2f %.2f %.2f %.2f %.2f %.2f deg ] :" % (state[0], state[1],
+        #           state[2], state[3], state[4], np.rad2deg(state[5])), self.isStateValid(state))
         return solved
 
     def visualize_path(self, path_file="path.txt"):

@@ -32,6 +32,10 @@ rospack = rospkg.RosPack()
 print("Current working directory:", os.getcwd())
 DRONES_NUMBER = 5
 
+# get command line arguments
+CALCULATE_PATH = len(sys.argv) == 1 \
+    or sys.argv[1] == '1' or sys.argv[1].lower() == 'true'
+
 
 class MeshMarker(Marker):
     def __init__(self, id, mesh_path, pos=[0, 0, 0], rot=[0, 0, 0, 1]):
@@ -228,8 +232,11 @@ if __name__ == "__main__":
     envPub = rospy.Publisher('rb_environment',  Marker, queue_size=10)
 
     # calculate path
-    print("Calculating path...")
-    calculate_path_FCL(robot_mesh_name, env_mesh_name)
+    if CALCULATE_PATH:
+        print("Calculating path...")
+        calculate_path_FCL(robot_mesh_name, env_mesh_name)
+    else:
+        print("Using already calculated path...")
 
     # path
     data = load_saved_path()
