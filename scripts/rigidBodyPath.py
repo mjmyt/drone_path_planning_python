@@ -27,6 +27,7 @@ from catenary import catenaries
 import rospkg
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
+pkg_drone_path_planning_path = rospack.get_path('drone_path_planning')
 
 
 print("Current working directory:", os.getcwd())
@@ -35,6 +36,8 @@ DRONES_NUMBER = 5
 # get command line arguments
 CALCULATE_PATH = len(sys.argv) == 1 \
     or sys.argv[1] == '1' or sys.argv[1].lower() == 'true'
+
+PLANNERS_COMPARISON = 0
 
 
 class MeshMarker(Marker):
@@ -166,19 +169,50 @@ def calculate_path_FCL(robot_mesh_name, env_mesh_name):
     goal_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
 
     planner.set_start_goal(start_pose.pose, goal_pose.pose)
-    # list of all available og planners (maybe some are missing)
-    planners = ['ABITstar', 'AITstar', 'BFMT', 'BITstar', 'BKPIECE1', 'BiEST',
-                'EST', 'FMT', 'InformedRRTstar', 'KPIECE1', 'KStarStrategy', 'KStrategy', 'LBKPIECE1', 'LBTRRT', 'LazyLBTRRT',
-                'LazyPRM', 'LazyPRMstar', 'LazyRRT', 'NearestNeighbors', 'NearestNeighborsLinear', 'NumNeighborsFn',
-                'PDST', 'PRM', 'PRMstar', 'ProjEST',
-                'QRRT', 'RRT', 'RRTConnect', 'RRTXstatic', 'RRTsharp', 'RRTstar', 'SBL', 'SORRTstar', 'SPARS', 'SPARStwo', 'SST']
+    if PLANNERS_COMPARISON:
+        # list of all available og planners (maybe some are missing)
+        planners = ['RRT', 'ABITstar', 'AITstar', 'BFMT', 'BITstar', 'BKPIECE1', 'BiEST',
+                    'EST', 'FMT', 'InformedRRTstar', 'KPIECE1', 'KStarStrategy', 'KStrategy', 'LBKPIECE1', 'LBTRRT', 'LazyLBTRRT',
+                    'LazyPRM', 'LazyPRMstar', 'LazyRRT', 'NearestNeighbors', 'NearestNeighborsLinear', 'NumNeighborsFn',
+                    'PDST', 'PRM', 'PRMstar', 'ProjEST',
+                    'QRRT', 'RRT', 'RRTConnect', 'RRTXstatic', 'RRTsharp', 'RRTstar', 'SBL', 'SORRTstar', 'SPARS', 'SPARStwo', 'SST']
+        # planners = ['RRT', 'RRTConnect', 'RRTXstatic', 'RRTsharp']
+        # solution_time ,states_tried,path_cost
+        length_optim_objective = ob.PathLengthOptimizationObjective(
+            planner.ss.getSpaceInformation())
 
-    planner.set_planner()
-    # planner.set_planner(og.FMT)
-    # planner.set_planner(og.RRTConnect)
-    # planner.set_planner(og.InformedRRTstar)
+        planners_results = np.zeros((4, len(planners)))
+        for i, planner_name in enumerate(planners):
+            print(
+                "================================ %s ================================" % planner_name)
+            planner_class = eval('og.' + planner_name)
+            print(planner_class)
+            try:
+                planner.set_planner(planner_class)
+                t0 = rospy.get_time()
 
-    path = planner.solve(timeout=60.0)
+                path, time, states_tried, avrg_time_per_valid_check = planner.solve(
+                    timeout=60.0)
+                path_cost = planner.path.cost(length_optim_objective)
+                path_cost = float(path_cost.value())
+            except Exception as e:
+                print(e)
+                continue
+
+            planners_results[0, i] = rospy.get_time() - t0
+            planners_results[1, i] = states_tried
+            planners_results[2, i] = avrg_time_per_valid_check
+            planners_results[3, i] = path_cost
+
+            print("===============================================================")
+
+            # save matrix as csv file at every iteration1
+            file_name = pkg_drone_path_planning_path+'/resources/planners_results.csv'
+            np.savetxt(file_name, planners_results,
+                       delimiter=",", fmt='%f', header=",".join(planners))
+
+    planner.set_planner(og.RRT)
+    path = planner.solve(timeout=60.0)[0]
     # planner.visualize_path()
 
 
@@ -198,8 +232,8 @@ def get_cat_lowest_function_service():
 def load_saved_path(filename='path.txt'):
     try:
         # get the file path of droen_path_planning package
-        path_file = rospack.get_path(
-            'drone_path_planning')+'/resources/paths/{}'.format(filename)
+        path_file = pkg_drone_path_planning_path + \
+            '/resources/paths/{}'.format(filename)
         data = np.loadtxt(path_file)
     except Exception as e:
         print("Error:", e)

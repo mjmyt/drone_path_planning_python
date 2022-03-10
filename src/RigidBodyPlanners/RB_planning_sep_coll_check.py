@@ -81,8 +81,8 @@ class PlannerSepCollision:
         optimizations = ["MechanicalWorkOptimizationObjective",
                          "MultiOptimizationObjective", "PathLengthOptimizationObjective"]
 
-        self.set_optim_objective()
-        # self.set_optim_objective(ob.PathLengthOptimizationObjective)
+        # self.set_optim_objective()
+        self.set_optim_objective(ob.PathLengthOptimizationObjective)
 
         print("Space Bounds High:", self.space.getBounds().high[0], self.space.getBounds().high[1], self.space.getBounds().high[2],
               self.space.getBounds().high[3], self.space.getBounds().high[4])
@@ -155,13 +155,13 @@ class PlannerSepCollision:
         goal[4] = self.L * 0.5
         goal[5] = 0
 
-        print("==============================")
+        print("============================================================")
         print("START POSE:")
         self.print_state_data(start)
-        print("==============================")
+        print("============================================================")
         print("GOAL POSE:")
         self.print_state_data(goal)
-        print("==============================")
+        print("============================================================")
 
         self.ss.setStartAndGoalStates(start, goal)
         # return the start & goal states
@@ -181,6 +181,8 @@ class PlannerSepCollision:
         # this will automatically choose a default planner with
         # default parameters
         print(f"Solving with timeout: {timeout} sec...")
+        self.states_tried = 0
+        self.time_sum = 0
         solved = self.ss.solve(timeout)
         if solved:
             print("Found solution...")
@@ -192,16 +194,17 @@ class PlannerSepCollision:
 
             self.path = path
             self.save_path()
+            # solution_states = self.path.getStates()
+
+            # print("Checking vaildity of the solution states...")
+            # for state in solution_states:
+            #     print("[ %.2f %.2f %.2f %.2f %.2f %.2f deg ] :" % (state[0], state[1],
+            #           state[2], state[3], state[4], np.rad2deg(state[5])), self.isStateValid(state))
         else:
             print("No solution found")
+            return None, 0, 0, 0
 
-        solution_states = self.path.getStates()
-
-        # print("Checking vaildity of the solution states...")
-        # for state in solution_states:
-        #     print("[ %.2f %.2f %.2f %.2f %.2f %.2f deg ] :" % (state[0], state[1],
-        #           state[2], state[3], state[4], np.rad2deg(state[5])), self.isStateValid(state))
-        return solved
+        return solved, self.time_sum, self.states_tried, self.time_sum/self.states_tried
 
     def visualize_path(self, path_file="path.txt"):
         try:
