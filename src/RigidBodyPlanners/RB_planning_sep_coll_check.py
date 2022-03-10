@@ -82,6 +82,7 @@ class PlannerSepCollision:
                          "MultiOptimizationObjective", "PathLengthOptimizationObjective"]
 
         # self.set_optim_objective()
+        print("Setting default Optimization Objective (Path Length)")
         self.set_optim_objective(ob.PathLengthOptimizationObjective)
 
         print("Space Bounds High:", self.space.getBounds().high[0], self.space.getBounds().high[1], self.space.getBounds().high[2],
@@ -90,8 +91,12 @@ class PlannerSepCollision:
               self.space.getBounds().low[3], self.space.getBounds().low[4])
 
     def set_optim_objective(self, objective_class=ob.MechanicalWorkOptimizationObjective):
-        self.ss.setOptimizationObjective(
-            objective_class(self.ss.getSpaceInformation()))
+        try:
+            self.ss.setOptimizationObjective(
+                objective_class(self.ss.getSpaceInformation()))
+        except Exception as e:
+            print("Error setting optimization objective:", e)
+            self.ss.setOptimizationObjective(objective_class)
 
     def set_planner(self, planner_class=og.RRT):
         # choose planner

@@ -14,8 +14,6 @@ import os
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 from RigidBodyPlanners import *
-import tf2_ros
-import tf2_geometry_msgs
 
 from ompl import base as ob
 from ompl import geometric as og
@@ -211,7 +209,11 @@ def calculate_path_FCL(robot_mesh_name, env_mesh_name):
             np.savetxt(file_name, planners_results,
                        delimiter=",", fmt='%f', header=",".join(planners))
 
-    planner.set_planner(og.RRT)
+    planner.set_planner(og.RRTstar)
+    opt_objective = getBalancedObjective(
+        planner.ss.getSpaceInformation(),  rope_length=planner.L, cost_threshold=11)
+
+    planner.set_optim_objective(opt_objective)
     path = planner.solve(timeout=60.0)[0]
     # planner.visualize_path()
 
@@ -312,16 +314,8 @@ if __name__ == "__main__":
         else:
             i += 1
 
-        # rb.updatePose(path.poses[i].pose.position,
-        #               path.poses[i].pose.orientation, frame="world")
-
         rb.updatePose(dynamic_path.Path.poses[i].pose.position,
                       dynamic_path.Path.poses[i].pose.orientation, frame="world")
-
-        # rb_transformed = transform(rb )
-
-        # print("robot pos:", rb_transformed.pose.position.x,
-        #   rb_transformed.pose.position.y, rb_transformed.pose.position.z, " orient:", rb_transformed.pose.orientation.x, rb_transformed.pose.orientation.y, rb_transformed.pose.orientation.z, rb_transformed.pose.orientation.w)
 
         robPub.publish(rb)
 
