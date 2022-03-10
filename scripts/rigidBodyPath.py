@@ -209,7 +209,8 @@ def calculate_path_FCL(robot_mesh_name, env_mesh_name):
             np.savetxt(file_name, planners_results,
                        delimiter=",", fmt='%f', header=",".join(planners))
 
-    planner.set_planner(og.RRTstar)
+    # planner.set_planner(og.RRTstar)
+    planner.set_planner(og.RRT)
     opt_objective = getBalancedObjective(
         planner.ss.getSpaceInformation(),  rope_length=planner.L, cost_threshold=11)
 

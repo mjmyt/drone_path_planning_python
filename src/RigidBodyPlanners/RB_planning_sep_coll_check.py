@@ -195,7 +195,7 @@ class PlannerSepCollision:
             self.ss.simplifySolution()
             # print the simplified path
             path = self.ss.getSolutionPath()
-            path.interpolate(50)
+            path.interpolate(30)
 
             self.path = path
             self.save_path()
