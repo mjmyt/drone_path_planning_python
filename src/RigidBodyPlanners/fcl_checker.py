@@ -176,4 +176,19 @@ if __name__ == '__main__':
 
     # create_3D_triangle_stl(p0, p1, p2, custom_file_name)
 
-    visualize_meshes([custom_robot_file_name])
+    # visualize_meshes([custom_robot_file_name])
+
+    robot_V_filename = "src/drone_path_planning/resources/stl/robot-scene-V.stl"
+    robot_mesh = Fcl_mesh()
+    verts, vecs = robot_mesh.load_stl(robot_V_filename)
+    tris = robot_mesh.create_indexed_triangles(verts, vecs)
+
+    print(verts.shape, vecs.shape, tris.shape)
+    print("========================== verts ==========================")
+    for i, vert in enumerate(verts):
+        print(i, vert)
+    # print(verts)
+    print("========================== vecs ===========================")
+    print(vecs)
+    print("========================== tris ==========================")
+    print(tris)
