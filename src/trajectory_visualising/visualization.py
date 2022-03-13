@@ -36,7 +36,7 @@ def visualize_python(tr: Trajectory, timestep: float):
     plt.show()
 
 
-def get_nav_path_msg(tr: Trajectory, timestep: float):
+def get_nav_path_msg(tr: Trajectory, timestep: float, offset=[0, 0, 0]):
     """
     Publish the ROS message containing the waypoints
     """
@@ -55,9 +55,9 @@ def get_nav_path_msg(tr: Trajectory, timestep: float):
         out: TrajectoryOutput
 
         pose = PoseStamped()
-        pose.pose.position.x = out.pos[0]
-        pose.pose.position.y = out.pos[1]
-        pose.pose.position.z = out.pos[2]
+        pose.pose.position.x = out.pos[0] + offset[0]
+        pose.pose.position.y = out.pos[1] + offset[1]
+        pose.pose.position.z = out.pos[2] + offset[2]
 
         quaternion = tf.transformations.quaternion_from_euler(
             0, 0, -out.yaw)
