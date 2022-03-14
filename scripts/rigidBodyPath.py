@@ -150,8 +150,7 @@ def calculate_path_FCL(robot_mesh_name, env_mesh_name):
     print("robot_mesh_name:", robot_mesh_name)
     print("env_mesh_name:", env_mesh_name)
 
-    planner = PlannerSepCollision(
-        env_mesh_name, robot_mesh_name, catenaries.lowest_point_optimized)
+    planner = PlannerSepCollision(env_mesh_name, robot_mesh_name, catenaries.lowest_point_optimized, use_mesh_improvement=False)
 
     start = [-2, 5, 0]
     goal = [-2, -3, 0]

@@ -165,6 +165,7 @@ if __name__ == '__main__':
     custom_file_name = "custom_mesh.stl"
 
     custom_robot_file_name = "src/drone_path_planning/resources/stl/custom_triangle_robot.stl"
+    custom_robot_file_name = "src/drone_path_planning/resources/stl/custom_V_robot.stl"
 
     # p0 = np.array([-1.68, 1])
     # p1 = np.array([1.68, 1])
@@ -176,19 +177,19 @@ if __name__ == '__main__':
 
     # create_3D_triangle_stl(p0, p1, p2, custom_file_name)
 
-    # visualize_meshes([custom_robot_file_name])
+    visualize_meshes([custom_robot_file_name])
 
-    robot_V_filename = "src/drone_path_planning/resources/stl/robot-scene-V.stl"
-    robot_mesh = Fcl_mesh()
-    verts, vecs = robot_mesh.load_stl(robot_V_filename)
-    tris = robot_mesh.create_indexed_triangles(verts, vecs)
+    # robot_V_filename = "src/drone_path_planning/resources/stl/robot-scene-V.stl"
+    # robot_mesh = Fcl_mesh()
+    # verts, vecs = robot_mesh.load_stl(robot_V_filename)
+    # tris = robot_mesh.create_indexed_triangles(verts, vecs)
 
-    print(verts.shape, vecs.shape, tris.shape)
-    print("========================== verts ==========================")
-    for i, vert in enumerate(verts):
-        print(i, vert)
-    # print(verts)
-    print("========================== vecs ===========================")
-    print(vecs)
-    print("========================== tris ==========================")
-    print(tris)
+    # print(verts.shape, vecs.shape, tris.shape)
+    # print("========================== verts ==========================")
+    # for i, vert in enumerate(verts):
+    #     print(i, vert)
+    # # print(verts)
+    # print("========================== vecs ===========================")
+    # print(vecs)
+    # print("========================== tris ==========================")
+    # print(tris)

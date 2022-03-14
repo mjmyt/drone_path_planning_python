@@ -56,7 +56,7 @@ class Custom_robot_mesh():
 
         return p0, p1
 
-    def get_V_3D_points(p0, p1, lower, upper):
+    def get_triangle_3D_points(p0, p1, p2):
         # Created a matrix with all the vertices needed for the 3D triangle
         thickness = 0.2  # thickness of the triangle ,maybe should be a parameter
         offset = 0  # TODO: makes this 0 (used for comapring with thhe old one)
@@ -64,19 +64,14 @@ class Custom_robot_mesh():
         # print("p0: ", p0)
         # print("p1: ", p1)
         # print("p2: ", p2)
-        verts = np.zeros((8, 3))
+        verts = np.zeros((6, 3))
 
-        verts[0, :] = [p0[0],  offset - thickness/2, p0[1]]
-        verts[1, :] = [p0[0],  offset + thickness/2, p0[1]]
-
-        verts[2, :] = [lower[0],  offset - thickness/2, lower[1]]
-        verts[3, :] = [upper[0],  offset - thickness/2, upper[1]]
-
-        verts[4, :] = [lower[0],  offset + thickness/2, lower[1]]
-        verts[5, :] = [upper[0],  offset + thickness/2, upper[1]]
-
-        verts[6, :] = [p1[0],  offset - thickness/2, p1[1]]
-        verts[7, :] = [p1[0],  offset + thickness/2, p1[1]]
+        verts[0, :] = [p0[0],  offset + thickness/2, p0[1]]
+        verts[1, :] = [p1[0],  offset + thickness/2, p1[1]]
+        verts[2, :] = [p2[0],  offset + thickness/2, p2[1]]
+        verts[3, :] = [p0[0],  offset + -thickness/2, p0[1]]
+        verts[4, :] = [p1[0],  offset + -thickness/2, p1[1]]
+        verts[5, :] = [p2[0],  offset + -thickness/2, p2[1]]
 
         # print("verts: ", verts)
         return verts
@@ -125,7 +120,7 @@ class Custom_robot_mesh():
         # print("Created Fcl_Mesh ")
         return m
 
-    def get_V_2D_points(self, drones_distance, theta, L) -> mesh.Mesh:
+    def get_triangle_2D_points(self, drones_distance, theta, L) -> mesh.Mesh:
         """
         This function generated a 3D rigid trinagle body suitable for path planning of the drone swarm
         theta : represents the angle that is formed between the line connecting the drones and the horizontal plane
@@ -146,15 +141,12 @@ class Custom_robot_mesh():
         lowest_point = [lowest_point[0], lowest_point[2]]
 
         # safe distances calculations
-        p0[0] += self.drones_safety_distance
-        p1[0] += -self.drones_safety_distance
+        if self.enable_safe_distances:
+            p0[0] += self.drones_safety_distance
+            p1[0] += -self.drones_safety_distance
+            lowest_point[1] -= self.lowest_point_safety_distance
 
-        upper_lowest_point = [lowest_point[0],
-                              lowest_point[1] + self.lowest_point_safety_distance]
-        lower_lowest_point = [lowest_point[0],
-                              lowest_point[1] - self.lowest_point_safety_distance]
-
-        return p0, p1, upper_lowest_point, lower_lowest_point
+        return p0, p1, lowest_point
 
     def create_custom_robot(self, drones_distance, theta, L) -> mesh.Mesh:
         p0, p1, lowest_point = self.get_triangle_2D_points(
@@ -219,7 +211,7 @@ class Custom_robot_mesh_improvement():
         self.L = L
 
         self.enable_safe_distances(
-            drones_distance=0.3, lowest_point_safety_distance=0.3)
+            drones_distance=0.3, lowest_point_safety_distance=0.2)
 
         if mesh_type == None:
             print("mesh_type is None")
@@ -256,7 +248,7 @@ class Custom_robot_mesh_improvement():
 
         return p0, p1
 
-    def get_triangle_3D_points(p0, p1, p2):
+    def get_V_3D_points(p0: list, p1: list, lower: list, upper: list) -> np.array:
         # Created a matrix with all the vertices needed for the 3D triangle
         thickness = 0.2  # thickness of the triangle ,maybe should be a parameter
         offset = 0  # TODO: makes this 0 (used for comapring with thhe old one)
@@ -264,14 +256,19 @@ class Custom_robot_mesh_improvement():
         # print("p0: ", p0)
         # print("p1: ", p1)
         # print("p2: ", p2)
-        verts = np.zeros((6, 3))
+        verts = np.zeros((8, 3))
 
-        verts[0, :] = [p0[0],  offset + thickness/2, p0[1]]
-        verts[1, :] = [p1[0],  offset + thickness/2, p1[1]]
-        verts[2, :] = [p2[0],  offset + thickness/2, p2[1]]
-        verts[3, :] = [p0[0],  offset + -thickness/2, p0[1]]
-        verts[4, :] = [p1[0],  offset + -thickness/2, p1[1]]
-        verts[5, :] = [p2[0],  offset + -thickness/2, p2[1]]
+        verts[0, :] = [p0[0],  offset - thickness/2, p0[1]]
+        verts[1, :] = [p0[0],  offset + thickness/2, p0[1]]
+
+        verts[2, :] = [lower[0],  offset - thickness/2, lower[1]]
+        verts[3, :] = [upper[0],  offset - thickness/2, upper[1]]
+
+        verts[4, :] = [lower[0],  offset + thickness/2, lower[1]]
+        verts[5, :] = [upper[0],  offset + thickness/2, upper[1]]
+
+        verts[6, :] = [p1[0],  offset - thickness/2, p1[1]]
+        verts[7, :] = [p1[0],  offset + thickness/2, p1[1]]
 
         # print("verts: ", verts)
         return verts
@@ -294,10 +291,11 @@ class Custom_robot_mesh_improvement():
 
         return tris
 
-    def create_3D_triangle_stl(p0, p1, p2, custom_filename):
+    def create_3D_V_stl(p0, p1, lower, upper, custom_filename):
         # create mesh of stl.mesh.Mesh type
-        verts = Custom_robot_mesh.get_triangle_3D_points(p0, p1, p2)
-        tris = Custom_robot_mesh.get_tris()
+        verts = Custom_robot_mesh_improvement.get_V_3D_points(
+            p0, p1, lower, upper)
+        tris = Custom_robot_mesh_improvement.get_tris()
 
         num_triangles = tris.shape[0]
         data = np.zeros(num_triangles, dtype=mesh.Mesh.dtype)
@@ -311,10 +309,11 @@ class Custom_robot_mesh_improvement():
         print("Saved mesh to: ", custom_filename)
         return m
 
-    def create_3D_triangle_fcl_mesh(p0, p1, p2):
+    def create_3D_V_fcl_mesh(p0, p1, lower, upper):
         # create mesh of Fcl_mesh type
-        verts = Custom_robot_mesh.get_triangle_3D_points(p0, p1, p2)
-        tris = Custom_robot_mesh.get_tris()
+        verts = Custom_robot_mesh_improvement.get_V_3D_points(
+            p0, p1, lower, upper)
+        tris = Custom_robot_mesh_improvement.get_tris()
 
         m = Fcl_mesh()
         m.verts = verts
@@ -324,7 +323,7 @@ class Custom_robot_mesh_improvement():
         # print("Created Fcl_Mesh ")
         return m
 
-    def get_triangle_2D_points(self, drones_distance, theta, L) -> mesh.Mesh:
+    def get_V_2D_points(self, drones_distance, theta, L) -> mesh.Mesh:
         """
         This function generated a 3D rigid trinagle body suitable for path planning of the drone swarm
         theta : represents the angle that is formed between the line connecting the drones and the horizontal plane
@@ -345,25 +344,28 @@ class Custom_robot_mesh_improvement():
         lowest_point = [lowest_point[0], lowest_point[2]]
 
         # safe distances calculations
-        if self.enable_safe_distances:
-            p0[0] += self.drones_safety_distance
-            p1[0] += -self.drones_safety_distance
-            lowest_point[1] -= self.lowest_point_safety_distance
+        p0[0] += self.drones_safety_distance
+        p1[0] += -self.drones_safety_distance
 
-        return p0, p1, lowest_point
+        upper_lowest_point = [lowest_point[0],
+                              lowest_point[1] + self.lowest_point_safety_distance]
+        lower_lowest_point = [lowest_point[0],
+                              lowest_point[1] - self.lowest_point_safety_distance]
+
+        return p0, p1, upper_lowest_point, lower_lowest_point
 
     def create_custom_robot(self, drones_distance, theta, L) -> mesh.Mesh:
         p0, p1, lower, upper = self.get_V_2D_points(
             drones_distance, theta, L)
 
         if self.MESH_TYPE == mesh.Mesh:
-            filename = "src/drone_path_planning/resources/stl/custom_triangle_robot.stl"
-            self.mesh = Custom_robot_mesh.create_3D_triangle_stl(
-                p0, p1, lowest_point, filename)
+            filename = "src/drone_path_planning/resources/stl/custom_V_robot.stl"
+            self.mesh = Custom_robot_mesh_improvement.create_3D_V_stl(
+                p0, p1, lower, upper, filename)
 
         elif self.MESH_TYPE == Fcl_mesh:
-            self.mesh = Custom_robot_mesh.create_3D_triangle_fcl_mesh(
-                p0, p1, lowest_point)
+            self.mesh = Custom_robot_mesh_improvement.create_3D_V_fcl_mesh(
+                p0, p1, lower, upper)
         else:
             print("mesh_type is not one of the expected ones...")
             sys.exit()
@@ -371,10 +373,11 @@ class Custom_robot_mesh_improvement():
         return self.mesh
 
     def update_verts(self, drones_distance, theta, L):
-        p0, p1, lowest_point = self.get_triangle_2D_points(
+        p0, p1, lowest_point = self.get_V_2D_points(
             drones_distance, theta, L)
 
-        verts = Custom_robot_mesh.get_triangle_3D_points(p0, p1, lowest_point)
+        verts = Custom_robot_mesh_improvement.get_V_3D_points(
+            p0, p1, lowest_point)
 
         return verts
 
@@ -403,7 +406,7 @@ class Custom_robot_mesh_improvement():
 
 
 def test_cat_lowest_function(p0, p1, L):
-    return [0, 0, -0.5]
+    return [0, 0, -0.75]
 
 
 if __name__ == "__main__":
@@ -412,5 +415,7 @@ if __name__ == "__main__":
     theta = 0
     L = 2
 
-    mesh = Custom_robot_mesh(drones_distance, theta, L,
-                             test_cat_lowest_function, mesh_type="stl")
+    custom_mesh = Custom_robot_mesh_improvement(drones_distance, theta, L,
+                                                test_cat_lowest_function, mesh_type="stl")
+
+    custom_mesh.update_mesh(drones_distance, np.deg2rad(15), L)

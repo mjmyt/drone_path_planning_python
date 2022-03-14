@@ -26,7 +26,7 @@ except ImportError:
 
 try:
     from .fcl_checker import Fcl_checker
-    from .custom_robot_mesh import Custom_robot_mesh
+    from .custom_robot_mesh import Custom_robot_mesh, Custom_robot_mesh_improvement
 except ImportError:
     from fcl_checker import Fcl_checker
     from custom_robot_mesh import Custom_robot_mesh
@@ -36,7 +36,7 @@ print("cwd:", os.getcwd())
 
 
 class PlannerSepCollision:
-    def __init__(self, env_mesh_name, robot_mesh_name, cat_lowest_function) -> None:
+    def __init__(self, env_mesh_name, robot_mesh_name, cat_lowest_function, use_mesh_improvement=False) -> None:
         # env_mesh_name and robot_mesh_name are type of "env-scene-hole.stl"
         try:
             env_mesh = "ros_ws/src/drone_path_planning/resources/stl/{}".format(
@@ -59,8 +59,13 @@ class PlannerSepCollision:
         self.L = 3.0  # rope length #TODO:make this a ROS parameter
         drones_distance = 2  # distance between drones
         theta = 0
-        self.custom_robot = Custom_robot_mesh(
-            drones_distance, theta, self.L, cat_lowest_function, mesh_type="fcl")
+        self.use_mesh_improvement = use_mesh_improvement
+        if self.use_mesh_improvement:
+            self.custom_robot = Custom_robot_mesh_improvement(
+                drones_distance, theta, self.L, cat_lowest_function, mesh_type="fcl")
+        else:
+            self.custom_robot = Custom_robot_mesh(
+                drones_distance, theta, self.L, cat_lowest_function, mesh_type="fcl")
 
         # x, y, z, yaw , drones_distance, drones_angles
         self.space = ob.RealVectorStateSpace(6)
@@ -279,7 +284,8 @@ if __name__ == "__main__":
     # checker.visualize()
     env_mesh_name = "env-scene-hole.stl"
     robot_mesh_name = "robot-scene-triangle.stl"
-    planner = PlannerSepCollision(env_mesh_name, robot_mesh_name)
+    planner = PlannerSepCollision(
+        env_mesh_name, robot_mesh_name, use_mesh_improvement=True)
 
     start_pos = [-4, -2, 2]
     goal_pos = [4, 2, 2]
