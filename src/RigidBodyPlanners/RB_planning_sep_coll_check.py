@@ -27,9 +27,11 @@ except ImportError:
 try:
     from .fcl_checker import Fcl_checker
     from .custom_robot_mesh import Custom_robot_mesh, Custom_robot_mesh_improvement
+    from .goal_states import MyGoalRegion
 except ImportError:
     from fcl_checker import Fcl_checker
     from custom_robot_mesh import Custom_robot_mesh
+    from goal_states import MyGoalRegion
 
 import os
 print("cwd:", os.getcwd())
@@ -87,8 +89,8 @@ class PlannerSepCollision:
                          "MultiOptimizationObjective", "PathLengthOptimizationObjective"]
 
         # self.set_optim_objective()
-        print("Setting default Optimization Objective (Path Length)")
-        self.set_optim_objective(ob.PathLengthOptimizationObjective)
+        # print("Setting default Optimization Objective (Path Length)")
+        # self.set_optim_objective(ob.PathLengthOptimizationObjective)
 
         print("Space Bounds High:", self.space.getBounds().high[0], self.space.getBounds().high[1], self.space.getBounds().high[2],
               self.space.getBounds().high[3], self.space.getBounds().high[4])
@@ -173,8 +175,15 @@ class PlannerSepCollision:
         self.print_state_data(goal)
         print("============================================================")
 
-        self.ss.setStartAndGoalStates(start, goal)
+        # self.ss.setStartAndGoalStates(start, goal)
+        self.ss.setStartState(start)
+
         # return the start & goal states
+        goal_region = MyGoalRegion(self.ss.getSpaceInformation())
+        goal_region.setGoalPosition(goal)
+        self.ss.setGoal(goal_region)
+        input(self.ss.getGoal())
+
         return start, goal
 
     def print_state_data(self, state):
