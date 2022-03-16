@@ -75,6 +75,7 @@ class MyGoalRegion(ob.GoalRegion):
     def __init__(self, si):
         super(MyGoalRegion, self).__init__(si)
         self.setThreshold(0.25)
+        self.drones_angle_threshold = np.deg2rad(10)
 
     def setGoalPosition(self, goal_pos):
         self.goal_pos = goal_pos
@@ -84,6 +85,16 @@ class MyGoalRegion(ob.GoalRegion):
         dist = [state[0]-self.goal_pos[0], state[1]-self.goal_pos[1], state[2]-self.goal_pos[2]]
 
         return np.sqrt(dist[0]**2 + dist[1]**2 + dist[2]**2)
+
+    def isSatisfied(self, state):
+        return self.distanceGoal(state) < self.threshold and self.drones_angle_check(state)
+
+    def isSatisfied(self, state, threshold):
+        return self.distanceGoal(state) < threshold and self.drones_angle_check(state)
+
+    def drones_angle_check(self, state):
+        drones_angle = state[5]
+        return np.abs(drones_angle) < self.drones_angle_thresholds
 
 
 if __name__ == "__main__":

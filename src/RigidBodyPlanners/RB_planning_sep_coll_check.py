@@ -177,12 +177,13 @@ class PlannerSepCollision:
 
         # self.ss.setStartAndGoalStates(start, goal)
         self.ss.setStartState(start)
+        # self.ss.setGoalState(goal)
 
-        # return the start & goal states
+        # Set goal region
         goal_region = MyGoalRegion(self.ss.getSpaceInformation())
         goal_region.setGoalPosition(goal)
         self.ss.setGoal(goal_region)
-        input(self.ss.getGoal())
+        print(self.ss.getGoal())
 
         return start, goal
 
