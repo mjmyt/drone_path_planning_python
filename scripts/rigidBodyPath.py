@@ -152,8 +152,8 @@ def calculate_path_FCL(robot_mesh_name, env_mesh_name):
 
     planner = PlannerSepCollision(env_mesh_name, robot_mesh_name, catenaries.lowest_point_optimized, use_mesh_improvement=False)
 
-    start = [-2, 5, 0]
-    goal = [-2, -3, 0]
+    start = [-0.5, 3, 1]
+    goal = [+0.5, 5, 1]
 
     start_pose = PoseStamped()
     start_pose.pose.position.x, start_pose.pose.position.y, start_pose.pose.position.z = start
@@ -213,7 +213,7 @@ def calculate_path_FCL(robot_mesh_name, env_mesh_name):
     opt_objective = getBalancedObjective(
         planner.ss.getSpaceInformation(),  rope_length=planner.L, cost_threshold=11)
 
-    planner.set_optim_objective(opt_objective)
+    # planner.set_optim_objective(opt_objective)
     path = planner.solve(timeout=60.0)[0]
     # planner.visualize_path()
 
@@ -253,7 +253,7 @@ if __name__ == "__main__":
     rospy.init_node("rb_path_planning")
 
     robot_mesh_name = "robot-scene-triangle"
-    env_mesh_name = "env-scene-inclined"
+    env_mesh_name = "env-scene-ltu-experiment-hole-inclined-easy"
 
     # robot marker initialization
     mesh = "package://drone_path_planning/resources/collada/{}.dae".format(

@@ -58,8 +58,8 @@ class PlannerSepCollision:
 
         self.states_tried = 0
         self.time_sum = 0
-        self.L = 3.0  # rope length #TODO:make this a ROS parameter
-        drones_distance = 2  # distance between drones
+        self.L = 1.5  # rope length #TODO:make this a ROS parameter
+        drones_distance = 0.5*self.L  # distance between drones
         theta = 0
         self.use_mesh_improvement = use_mesh_improvement
         if self.use_mesh_improvement:
@@ -115,17 +115,17 @@ class PlannerSepCollision:
     def set_bounds(self):
         bounds = ob.RealVectorBounds(6)
         # set bounds for x, y, z , rotation
-        bounds.low[0] = -4.09
-        bounds.low[1] = -6
-        bounds.low[2] = -1.5
+        bounds.low[0] = -1.5
+        bounds.low[1] = -2.8
+        bounds.low[2] = 0.3
         bounds.low[3] = -pi
         bounds.low[4] = self.L * 0.2
         bounds.low[5] = -pi/3
 
         # set bounds for x, y, z, rotation
-        bounds.high[0] = 4.09
-        bounds.high[1] = 6
-        bounds.high[2] = 2.2
+        bounds.high[0] = 1.5
+        bounds.high[1] = 5.0
+        bounds.high[2] = 2.5
         bounds.high[3] = pi
         bounds.high[4] = self.L * 0.9
         bounds.high[5] = pi/3
@@ -155,7 +155,7 @@ class PlannerSepCollision:
         start[2] = start_pose.position.z
         start[3] = tf.transformations.euler_from_quaternion(
             [start_pose.orientation.x, start_pose.orientation.y, start_pose.orientation.z, start_pose.orientation.w])[2]
-        start[4] = self.L * 0.8
+        start[4] = self.L * 0.6
         start[5] = 0
 
         goal = ob.State(self.space)
@@ -177,13 +177,13 @@ class PlannerSepCollision:
 
         # self.ss.setStartAndGoalStates(start, goal)
         self.ss.setStartState(start)
-        # self.ss.setGoalState(goal)
+        self.ss.setGoalState(goal)
 
         # Set goal region
-        goal_region = MyGoalRegion(self.ss.getSpaceInformation())
-        goal_region.setGoalPosition(goal)
-        self.ss.setGoal(goal_region)
-        print(self.ss.getGoal())
+        # goal_region = MyGoalRegion(self.ss.getSpaceInformation())
+        # goal_region.setGoalPosition(goal)
+        # self.ss.setGoal(goal_region)
+        # print(self.ss.getGoal())
 
         return start, goal
 
@@ -292,7 +292,7 @@ def isBetween(x, min, max):
 
 if __name__ == "__main__":
     # checker.visualize()
-    env_mesh_name = "env-scene-hole.stl"
+    env_mesh_name = "env-scene-ltu-experiment-hole-inclined-easy.stl"
     robot_mesh_name = "robot-scene-triangle.stl"
     planner = PlannerSepCollision(
         env_mesh_name, robot_mesh_name, use_mesh_improvement=True)
