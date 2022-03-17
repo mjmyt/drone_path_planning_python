@@ -19,7 +19,7 @@ class Custom_robot_mesh():
         self.L = L
 
         self.enable_safe_distances(
-            drones_distance=0.3, lowest_point_safety_distance=0.3)
+            drones_distance=0.1, lowest_point_safety_distance=0.1)
 
         if mesh_type == None:
             print("mesh_type is None")
@@ -35,6 +35,9 @@ class Custom_robot_mesh():
         self.safe_distances = True
         self.drones_safety_distance = drones_distance
         self.lowest_point_safety_distance = lowest_point_safety_distance
+        print("Enabled safe distances")
+        print("drones_safety_distance: ", self.drones_safety_distance)
+        print("lowest_point_safety_distance: ", self.lowest_point_safety_distance)
 
     def drones_formation_2_triangle_points(self, drones_distance, theta):
         """
@@ -211,7 +214,7 @@ class Custom_robot_mesh_improvement():
         self.L = L
 
         self.enable_safe_distances(
-            drones_distance=0.3, lowest_point_safety_distance=0.2)
+            drones_distance=0.1, lowest_point_safety_distance=0.2)
 
         if mesh_type == None:
             print("mesh_type is None")

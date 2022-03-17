@@ -130,8 +130,6 @@ class PlannerSepCollision:
         bounds.high[4] = self.L * 0.9
         bounds.high[5] = pi/3
 
-        # bounds.setLow(-10)
-        # bounds.setHigh(10)
         self.space.setBounds(bounds)
 
         return bounds
@@ -155,7 +153,7 @@ class PlannerSepCollision:
         start[2] = start_pose.position.z
         start[3] = tf.transformations.euler_from_quaternion(
             [start_pose.orientation.x, start_pose.orientation.y, start_pose.orientation.z, start_pose.orientation.w])[2]
-        start[4] = self.L * 0.6
+        start[4] = self.L * 0.7
         start[5] = 0
 
         goal = ob.State(self.space)

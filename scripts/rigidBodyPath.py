@@ -152,8 +152,8 @@ def calculate_path_FCL(robot_mesh_name, env_mesh_name):
 
     planner = PlannerSepCollision(env_mesh_name, robot_mesh_name, catenaries.lowest_point_optimized, use_mesh_improvement=False)
 
-    start = [-0.5, 3, 1]
-    goal = [+0.5, 5, 1]
+    start = [-0.5, 3, 0.75]
+    goal = [+0.5, 5, 0.75]
 
     start_pose = PoseStamped()
     start_pose.pose.position.x, start_pose.pose.position.y, start_pose.pose.position.z = start
@@ -253,7 +253,8 @@ if __name__ == "__main__":
     rospy.init_node("rb_path_planning")
 
     robot_mesh_name = "robot-scene-triangle"
-    env_mesh_name = "env-scene-ltu-experiment-hole-inclined-easy"
+    env_mesh_name = "env-scene-ltu-experiment-hole-inclined"
+    # env_mesh_name = "env-scene-ltu-experiment-corridor-narrow"
 
     # robot marker initialization
     mesh = "package://drone_path_planning/resources/collada/{}.dae".format(
@@ -277,7 +278,8 @@ if __name__ == "__main__":
         print("Using already calculated path...")
 
     # path
-    data = load_saved_path()
+    # data = load_saved_path()
+    data = load_saved_path(filename='ltu_path-90deg_turns.txt')
 
     # generate dynamic path msg
     # path = getPath(data)
