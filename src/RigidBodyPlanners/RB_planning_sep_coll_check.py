@@ -267,7 +267,17 @@ class PlannerSepCollision:
         drones_distance = state[4]
         theta = state[5]
 
-        self.custom_robot.update_mesh(drones_distance, theta, self.L)
+        lowest_point = self.custom_robot.update_mesh(drones_distance, theta, self.L)
+        # ground collision check
+        # lowest_point is in x-y frame
+        # pos is in x-y-z frame
+        # So lowest_point_z = pos_z-lowest_point_y
+        lowest_point_z = pos[2]-lowest_point[1]
+
+        if lowest_point_z <= 0:
+            print("Ground collision")
+            return False
+
         self.checker.update_robot(self.custom_robot.mesh)
 
         self.checker.set_robot_transform(pos, q)

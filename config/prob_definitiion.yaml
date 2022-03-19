@@ -1,6 +1,6 @@
 #all angles are in DEGREES
 rope_length: 1.5
-calculate_new_path: True
+calculate_new_path: False
 
 env_mesh: "env-scene-ltu-experiment-hole-inclined"
 

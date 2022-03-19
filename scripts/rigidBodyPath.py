@@ -300,6 +300,11 @@ def get_planner_from_parameters():
     print("robot_mesh_name:", robot_mesh)
     print("env_mesh_name:", env_mesh)
 
+    if not calc_new_path:
+        print("Using saved path...")
+        solved = True
+        return solved, rb, robPub, env, envPub
+
     planner = PlannerSepCollision(env_mesh, robot_mesh, catenaries.lowest_point_optimized, rope_length, use_mesh_improvement=use_mesh_improvement)
 
     # Set bounds

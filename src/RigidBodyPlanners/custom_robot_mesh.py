@@ -167,7 +167,7 @@ class Custom_robot_mesh():
             print("mesh_type is not one of the expected ones...")
             sys.exit()
 
-        return self.mesh
+        return lowest_point
 
     def update_verts(self, drones_distance, theta, L):
         p0, p1, lowest_point = self.get_triangle_2D_points(
@@ -179,12 +179,14 @@ class Custom_robot_mesh():
 
     def update_mesh(self, drones_distance, theta, L):
         if self.MESH_TYPE == mesh.Mesh:
-            self.update_mesh_stl_mesh(drones_distance, theta, L)
+            lowest_point = self.update_mesh_stl_mesh(drones_distance, theta, L)
         elif self.MESH_TYPE == Fcl_mesh:
-            self.update_mesh_fcl_mesh(drones_distance, theta, L)
+            lowest_point = self.update_mesh_fcl_mesh(drones_distance, theta, L)
         else:
             print("mesh_type is not one of the expected ones...")
             sys.exit()
+
+        return lowest_point
 
     def update_mesh_fcl_mesh(self, drones_distance, theta, L):
         # verts = self.update_verts(drones_distance, theta, L)
@@ -193,12 +195,12 @@ class Custom_robot_mesh():
         # self.mesh.update_vertices(verts)
 
         # so I end up making a new mesh
-        self.create_custom_robot(
-            drones_distance, theta, L)
+        lowest_point = self.create_custom_robot(drones_distance, theta, L)
+
+        return lowest_point
 
     def update_mesh_stl_mesh(self, drones_distance, theta, L):
-        self.create_custom_robot(
-            drones_distance, theta, L)  # TODO: should try not to  making a new mesh
+        self.create_custom_robot(drones_distance, theta, L)  # TODO: should try not to  making a new mesh
 
 
 class Custom_robot_mesh_improvement():
@@ -373,7 +375,7 @@ class Custom_robot_mesh_improvement():
             print("mesh_type is not one of the expected ones...")
             sys.exit()
 
-        return self.mesh
+        return lower
 
     def update_verts(self, drones_distance, theta, L):
         p0, p1, lowest_point = self.get_V_2D_points(
@@ -386,12 +388,14 @@ class Custom_robot_mesh_improvement():
 
     def update_mesh(self, drones_distance, theta, L):
         if self.MESH_TYPE == mesh.Mesh:
-            self.update_mesh_stl_mesh(drones_distance, theta, L)
+            lower = self.update_mesh_stl_mesh(drones_distance, theta, L)
         elif self.MESH_TYPE == Fcl_mesh:
-            self.update_mesh_fcl_mesh(drones_distance, theta, L)
+            lower = self.update_mesh_fcl_mesh(drones_distance, theta, L)
         else:
             print("mesh_type is not one of the expected ones...")
             sys.exit()
+
+        return lower
 
     def update_mesh_fcl_mesh(self, drones_distance, theta, L):
         # verts = self.update_verts(drones_distance, theta, L)
@@ -400,12 +404,12 @@ class Custom_robot_mesh_improvement():
         # self.mesh.update_vertices(verts)
 
         # so I end up making a new mesh
-        self.create_custom_robot(
-            drones_distance, theta, L)
+        lower = self.create_custom_robot(drones_distance, theta, L)
+
+        return lower
 
     def update_mesh_stl_mesh(self, drones_distance, theta, L):
-        self.create_custom_robot(
-            drones_distance, theta, L)  # TODO: should try not to  making a new mesh
+        lower = self.create_custom_robot(drones_distance, theta, L)  # TODO: should try not to  making a new mesh
 
 
 def test_cat_lowest_function(p0, p1, L):
