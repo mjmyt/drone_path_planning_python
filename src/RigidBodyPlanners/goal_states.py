@@ -76,6 +76,7 @@ class MyGoalRegion(ob.GoalRegion):
         super(MyGoalRegion, self).__init__(si)
         self.setThreshold(0.25)
         self.drones_angle_threshold = np.deg2rad(10)
+        self.yaw_threshold = np.deg2rad(10)
 
     def setGoalPosition(self, goal_pos):
         self.goal_pos = goal_pos
@@ -84,17 +85,29 @@ class MyGoalRegion(ob.GoalRegion):
         pos = [state[0], state[1], state[2]]
         dist = [state[0]-self.goal_pos[0], state[1]-self.goal_pos[1], state[2]-self.goal_pos[2]]
 
-        return np.sqrt(dist[0]**2 + dist[1]**2 + dist[2]**2)
+        yaw_dist = self.get_yaw_distance(state[3])
 
-    def isSatisfied(self, state):
-        return self.distanceGoal(state) < self.threshold and self.drones_angle_check(state)
+        return np.sqrt(dist[0]**2 + dist[1]**2 + dist[2]**2) + yaw_dist
 
-    def isSatisfied(self, state, threshold):
-        return self.distanceGoal(state) < threshold and self.drones_angle_check(state)
+    # def isSatisfied(self, state):
+        # return self.distanceGoal(state) < self.threshold and self.drones_angle_check(state)
+
+    # def isSatisfied(self, state, threshold):
+        # return self.distanceGoal(state) < threshold and self.drones_angle_check(state) and self.yaw_check(state)
 
     def drones_angle_check(self, state):
         drones_angle = state[5]
         return np.abs(drones_angle) < self.drones_angle_thresholds
+
+    def yaw_check(self, state):
+        yaw = state[3]
+        yaw_err = np.abs(yaw)
+        symmetric_yaw_err = np.abs(yaw - np.pi)
+
+        return yaw_err < self.yaw_threshold or symmetric_yaw_err < self.yaw_threshold
+
+    def get_yaw_distance(self, yaw):
+        return min(np.abs(yaw), np.abs(yaw - np.pi))
 
 
 if __name__ == "__main__":

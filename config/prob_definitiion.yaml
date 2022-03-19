@@ -1,6 +1,6 @@
 #all angles are in DEGREES
 rope_length: 1.5
-calculate_new_path: False
+calculate_new_path: True
 
 env_mesh: "env-scene-ltu-experiment-hole-inclined"
 
@@ -8,7 +8,7 @@ env_mesh: "env-scene-ltu-experiment-hole-inclined"
 use_mesh_improvement: True
 use_dynamic_goal: False
 
-optimal_objective: "None" #values:None, ob.PathLengthOptimizationObjective,balanced
+optimal_objective: "balanced" #values:None, ob.PathLengthOptimizationObjective,balanced
 
 safety_distances: { drones: 0.1, lowest_point: 0.1 }
 
