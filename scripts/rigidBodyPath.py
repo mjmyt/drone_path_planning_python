@@ -248,10 +248,94 @@ def load_saved_path(filename='path.txt'):
     return data
 
 
-if __name__ == "__main__":
+def get_start_goal_poses(start, goal):
+    start_pose = PoseStamped()
+    start_pose.pose.position.x, start_pose.pose.position.y, start_pose.pose.position.z = start['x'], start['y'], start['z']
+    q = tf.quaternion_from_euler(0, 0, 0)
+    start_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
 
+    goal_pose = PoseStamped()
+    goal_pose.pose.position.x, goal_pose.pose.position.y, goal_pose.pose.position.z = goal['x'], goal['y'], goal['z']
+    q = tf.quaternion_from_euler(0, 0, 0)
+    goal_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
+
+    return start_pose, goal_pose
+
+
+def get_planner_from_parameters():
+    calc_new_path = rospy.get_param('planning/calculate_new_path')
+    rope_length = rospy.get_param('planning/rope_length')
+    env_mesh = rospy.get_param('planning/env_mesh')
+    use_mesh_improvement = rospy.get_param('planning/use_mesh_improvement')
+    use_dynamic_goal = rospy.get_param('planning/use_dynamic_goal')
+    optimal_objective = rospy.get_param('planning/optimal_objective')
+    # safety distances
+    safety_distances = rospy.get_param('planning/safety_distances')
+
+    start = rospy.get_param('planning/start')
+    goal = rospy.get_param('planning/goal')
+
+    bounds = rospy.get_param('planning/bounds')
+
+    planner_algorithm = rospy.get_param('planning/planner_algorithm')
+
+    # robot marker initialization
+    robot_mesh = "robot-scene-triangle"
+    mesh = "package://drone_path_planning/resources/collada/{}.dae".format(
+        robot_mesh)
+    rb = MeshMarker(id=0, mesh_path=mesh)
+    robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
+
+    # Environment marker initialization
+    mesh = "package://drone_path_planning/resources/collada/{}.dae".format(
+        env_mesh)
+    env = MeshMarker(id=1, mesh_path=mesh)
+    env.color.r, env.color.g, env.color.b = 1, 0, 0
+    env.updatePose([0, 0, 0], [0, 0, 0, 1])
+    envPub = rospy.Publisher('rb_environment',  Marker, queue_size=10)
+
+    robot_mesh += ".stl"
+    env_mesh += ".stl"
+
+    print("robot_mesh_name:", robot_mesh)
+    print("env_mesh_name:", env_mesh)
+
+    planner = PlannerSepCollision(env_mesh, robot_mesh, catenaries.lowest_point_optimized, rope_length, use_mesh_improvement=use_mesh_improvement)
+
+    # Set bounds
+    planner.set_bounds(bounds)
+
+    planner.setup()
+
+    # Set start and goal
+    start_pose, goal_pose = get_start_goal_poses(start, goal)
+    planner.set_start_goal(start_pose.pose, goal_pose.pose, use_goal_region=use_dynamic_goal)
+
+    planner.set_planner(eval(planner_algorithm))
+
+    # Set safety distances
+    planner.set_safety_distances(safety_distances)
+
+    # Set optimal objective
+    if optimal_objective != "None":
+        if optimal_objective == "balanced":
+            opt_objective = getBalancedObjective(planner.ss.getSpaceInformation(),
+                                                 rope_length=planner.L, cost_threshold=11)
+        else:
+            opt_objective = eval(optimal_objective)
+
+        planner.set_optim_objective(opt_objective)
+    else:
+        print("No optimal objective set")
+
+    solved = planner.solve(timeout=60.0)[0]
+
+    return solved, rb, robPub, env, envPub
+
+
+def main_working():
     rospy.init_node("rb_path_planning")
-
+    # Load parameters
     robot_mesh_name = "robot-scene-triangle"
     env_mesh_name = "env-scene-ltu-experiment-hole-inclined"
     # env_mesh_name = "env-scene-ltu-experiment-corridor-narrow"
@@ -280,6 +364,68 @@ if __name__ == "__main__":
     # path
     # data = load_saved_path()
     data = load_saved_path(filename='ltu_path-90deg_turns.txt')
+
+    # generate dynamic path msg
+    # path = getPath(data)
+    dynamic_path = generate_dynamic_path_msg(data)
+    print("Loaded and generated dynamic path")
+
+    trajPub = rospy.Publisher('rigiBodyPath',  Path, queue_size=10)
+    trajPub.publish(dynamic_path.Path)
+
+    dynamic_path_pub = rospy.Publisher(
+        'dynamicRigiBodyPath', rigid_body_dynamic_path, queue_size=10)
+
+    print("Waiting for connections to the  /dynamicRigiBodyPath topic...")
+    while dynamic_path_pub.get_num_connections() == 0:
+        if rospy.is_shutdown():
+            sys.exit()
+
+    print("Publishing dynamic path...")
+    dynamic_path_pub.publish(dynamic_path)
+    print("Published dynamic path!")
+
+    # transform
+    br = tf.TransformBroadcaster()
+
+    i = 0
+    rate = rospy.Rate(10.0)  # hz
+    while not rospy.is_shutdown():
+        rospy.sleep(0.1)
+        br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(-math.pi/2, 0, 0), rospy.Time.now(),
+                         "world", "ompl")
+
+        if i == data.shape[0]-1:
+            i = 0
+        else:
+            i += 1
+
+        rb.updatePose(dynamic_path.Path.poses[i].pose.position,
+                      dynamic_path.Path.poses[i].pose.orientation, frame="world")
+
+        robPub.publish(rb)
+
+        pos = (rb.pose.position.x, rb.pose.position.y, rb.pose.position.z)
+        orientation = (rb.pose.orientation.x, rb.pose.orientation.y,
+                       rb.pose.orientation.z, rb.pose.orientation.w)
+
+        br.sendTransform(pos, orientation, rospy.Time.now(),
+                         "rigid_body", "world")
+
+        envPub.publish(env)
+        # trajPub.publish(path)
+        trajPub.publish(dynamic_path.Path)
+
+        rate.sleep()
+
+
+if __name__ == "__main__":
+
+    rospy.init_node("rb_path_planning")
+    # Load parameters
+    solved, rb, robPub, env, envPub = get_planner_from_parameters()
+
+    data = load_saved_path(filename='path.txt')
 
     # generate dynamic path msg
     # path = getPath(data)

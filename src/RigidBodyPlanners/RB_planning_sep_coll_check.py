@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Author: Mark Moll
+import rospkg
 from stl import mesh
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits import mplot3d
@@ -36,30 +37,24 @@ except ImportError:
 import os
 print("cwd:", os.getcwd())
 
+# get an instance of RosPack with the default search paths
+rospack = rospkg.RosPack()
+
 
 class PlannerSepCollision:
-    def __init__(self, env_mesh_name, robot_mesh_name, cat_lowest_function, use_mesh_improvement=False) -> None:
+    def __init__(self, env_mesh_name, robot_mesh_name, cat_lowest_function,  rope_length, use_mesh_improvement=False) -> None:
         # env_mesh_name and robot_mesh_name are type of "env-scene-hole.stl"
-        try:
-            env_mesh = "ros_ws/src/drone_path_planning/resources/stl/{}".format(
-                env_mesh_name)
-            robot_mesh = "ros_ws/src/drone_path_planning/resources/stl/{}".format(
-                robot_mesh_name)
+        pkg_path = rospack.get_path("drone_path_planning")
 
-            self.checker = Fcl_checker(env_mesh, robot_mesh)
-        except:
-            print("cwd:", os.getcwd())
-            env_mesh = r"/home/marios/thesis_ws/src/drone_path_planning/resources/stl/{}".format(
-                env_mesh_name)
-            robot_mesh = r"/home/marios/thesis_ws/src/drone_path_planning/resources/stl/{}".format(
-                robot_mesh_name)
-
-            self.checker = Fcl_checker(env_mesh, robot_mesh)
+        env_mesh = pkg_path+"/resources/stl/{}".format(env_mesh_name)
+        robot_mesh = pkg_path+"/resources/stl/{}".format(robot_mesh_name)
+        self.checker = Fcl_checker(env_mesh, robot_mesh)
 
         self.states_tried = 0
         self.time_sum = 0
-        self.L = 1.5  # rope length #TODO:make this a ROS parameter
+        self.L = rope_length
         drones_distance = 0.5*self.L  # distance between drones
+
         theta = 0
         self.use_mesh_improvement = use_mesh_improvement
         if self.use_mesh_improvement:
@@ -71,16 +66,6 @@ class PlannerSepCollision:
 
         # x, y, z, yaw , drones_distance, drones_angles
         self.space = ob.RealVectorStateSpace(6)
-
-        # set lower and upper bounds
-        self.set_bounds()
-
-        self.ss = og.SimpleSetup(self.space)
-        # set State Validity Checker function
-        self.ss.setStateValidityChecker(
-            ob.StateValidityCheckerFn(self.isStateValid))
-
-        self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.01)
 
         # set problem optimization objective
         # all available ob optimization objectives (maybe there are some more)
@@ -97,6 +82,14 @@ class PlannerSepCollision:
         print("Space Bounds Low:", self.space.getBounds().low[0], self.space.getBounds().low[1], self.space.getBounds().low[2],
               self.space.getBounds().low[3], self.space.getBounds().low[4])
 
+    def setup(self):
+        self.ss = og.SimpleSetup(self.space)
+        # set State Validity Checker function
+        self.ss.setStateValidityChecker(
+            ob.StateValidityCheckerFn(self.isStateValid))
+
+        self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.01)
+
     def set_optim_objective(self, objective_class=ob.MechanicalWorkOptimizationObjective):
         try:
             self.ss.setOptimizationObjective(
@@ -112,23 +105,27 @@ class PlannerSepCollision:
         self.ss.setPlanner(planner)
         self.ss.setup()
 
-    def set_bounds(self):
+    def set_safety_distances(self, safety_distances):
+        self.custom_robot.enable_safe_distances(drones_distance=safety_distances['drones'],
+                                                lowest_point_safety_distance=safety_distances['lowest_point'])
+
+    def set_bounds(self, bounds_param):
         bounds = ob.RealVectorBounds(6)
         # set bounds for x, y, z , rotation
-        bounds.low[0] = -1.5
-        bounds.low[1] = -2.8
-        bounds.low[2] = 0.3
-        bounds.low[3] = -pi
-        bounds.low[4] = self.L * 0.2
-        bounds.low[5] = -pi/3
+        bounds.low[0] = bounds_param['low'][0]
+        bounds.low[1] = bounds_param['low'][1]
+        bounds.low[2] = bounds_param['low'][2]
+        bounds.low[3] = np.deg2rad(bounds_param['low'][3])
+        bounds.low[4] = bounds_param['low'][4] * self.L
+        bounds.low[5] = np.deg2rad(bounds_param['low'][5])
 
         # set bounds for x, y, z, rotation
-        bounds.high[0] = 1.5
-        bounds.high[1] = 5.0
-        bounds.high[2] = 2.5
-        bounds.high[3] = pi
-        bounds.high[4] = self.L * 0.9
-        bounds.high[5] = pi/3
+        bounds.high[0] = bounds_param['high'][0]
+        bounds.high[1] = bounds_param['high'][1]
+        bounds.high[2] = bounds_param['high'][2]
+        bounds.high[3] = np.deg2rad(bounds_param['high'][3])
+        bounds.high[4] = bounds_param['high'][4] * self.L
+        bounds.high[5] = np.deg2rad(bounds_param['high'][5])
 
         self.space.setBounds(bounds)
 
@@ -136,14 +133,15 @@ class PlannerSepCollision:
 
     def save_path(self, file_name="path.txt"):
         # save the path
-        file_name = "src/drone_path_planning/resources/paths/{}".format(
-            file_name)
+        pkg_path = rospack.get_path("drone_path_planning")
+
+        file_name = pkg_path+"/resources/paths/{}".format(file_name)
         print("Saving path to %s" % file_name)
         text_file = open(file_name, "w")
         n = text_file.write(self.path.printAsMatrix())
         text_file.close()
 
-    def set_start_goal(self, start_pose: Pose, goal_pose: Pose, transform=False):
+    def set_start_goal(self, start_pose: Pose, goal_pose: Pose, use_goal_region=False):
 
         # define start state
         start = ob.State(self.space)
@@ -175,13 +173,16 @@ class PlannerSepCollision:
 
         # self.ss.setStartAndGoalStates(start, goal)
         self.ss.setStartState(start)
-        self.ss.setGoalState(goal)
 
-        # Set goal region
-        # goal_region = MyGoalRegion(self.ss.getSpaceInformation())
-        # goal_region.setGoalPosition(goal)
-        # self.ss.setGoal(goal_region)
-        # print(self.ss.getGoal())
+        if not use_goal_region:
+            self.ss.setGoalState(goal)
+        else:
+            # Set goal region
+            print("Setting goal region...")
+            goal_region = MyGoalRegion(self.ss.getSpaceInformation())
+            goal_region.setGoalPosition(goal)
+            self.ss.setGoal(goal_region)
+            print(self.ss.getGoal())
 
         return start, goal
 

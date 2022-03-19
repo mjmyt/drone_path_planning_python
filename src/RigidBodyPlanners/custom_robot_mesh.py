@@ -193,11 +193,11 @@ class Custom_robot_mesh():
         # self.mesh.update_vertices(verts)
 
         # so I end up making a new mesh
-        self.mesh = self.create_custom_robot(
+        self.create_custom_robot(
             drones_distance, theta, L)
 
     def update_mesh_stl_mesh(self, drones_distance, theta, L):
-        self.mesh = self.create_custom_robot(
+        self.create_custom_robot(
             drones_distance, theta, L)  # TODO: should try not to  making a new mesh
 
 
@@ -400,11 +400,11 @@ class Custom_robot_mesh_improvement():
         # self.mesh.update_vertices(verts)
 
         # so I end up making a new mesh
-        self.mesh = self.create_custom_robot(
+        self.create_custom_robot(
             drones_distance, theta, L)
 
     def update_mesh_stl_mesh(self, drones_distance, theta, L):
-        self.mesh = self.create_custom_robot(
+        self.create_custom_robot(
             drones_distance, theta, L)  # TODO: should try not to  making a new mesh
 
 
