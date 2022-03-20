@@ -123,7 +123,13 @@ class Custom_robot_mesh():
         # print("Created Fcl_Mesh ")
         return m
 
-    def get_triangle_2D_points(self, drones_distance, theta, L) -> mesh.Mesh:
+    def get_lowest_point(self, p0, p1):
+        lowest_point = self.catenary_lowest_function(p0, p1, L)
+        lowest_point = [lowest_point[0], lowest_point[2]]
+
+        return lowest_point
+
+    def get_triangle_2D_points(self, drones_distance, theta, L=None) -> mesh.Mesh:
         """
         This function generated a 3D rigid trinagle body suitable for path planning of the drone swarm
         theta : represents the angle that is formed between the line connecting the drones and the horizontal plane
@@ -133,20 +139,23 @@ class Custom_robot_mesh():
             drones_distance, theta)
 
         p0, p1 = [p0[0], p0[1], 0], [p1[0], p1[1], 0]
+        L = self.L if L == None else L
 
         # print("p0: ", p0)
         # print("p1: ", p1)
         # Set the lowest point of the catenary formed by the 2 previous points
         # as the 3rd point of the catenary
 
-        # lowest_point = self.catenary_lowest_function(p0, p1, L).lowest_point
-        lowest_point = self.catenary_lowest_function(p0, p1, L)
-        lowest_point = [lowest_point[0], lowest_point[2]]
+        lowest_point = self.get_lowest_point(p0, p1)
 
         # safe distances calculations
         if self.enable_safe_distances:
             p0[0] += self.drones_safety_distance
             p1[0] += -self.drones_safety_distance
+
+            p0[1] += self.lowest_point_safety_distance
+            p1[1] += self.lowest_point_safety_distance
+
             lowest_point[1] -= self.lowest_point_safety_distance
 
         return p0, p1, lowest_point

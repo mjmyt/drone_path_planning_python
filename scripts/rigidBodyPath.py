@@ -322,16 +322,20 @@ def get_planner_from_parameters():
     planner.set_safety_distances(safety_distances)
 
     # Set optimal objective
-    if optimal_objective != "None":
-        if optimal_objective == "balanced":
-            opt_objective = getBalancedObjective(planner.ss.getSpaceInformation(),
-                                                 rope_length=planner.L, cost_threshold=11)
-        else:
-            opt_objective = eval(optimal_objective)
+    si = planner.ss.getSpaceInformation()
 
-        planner.set_optim_objective(opt_objective)
+    opt_obj_dict = {}
+    opt_obj_dict["None"] = None
+    opt_obj_dict["balanced"] = getBalancedObjective(si, rope_length=planner.L, cost_threshold=11)
+    opt_obj_dict["obstacle_clearance"] = getObstacleClearanceObjective(si, planner.L, planner.custom_robot, planner.checker,
+                                                                       threshold=5)
+
+    if optimal_objective not in opt_obj_dict:
+        optimal_objective = eval(optimal_objective)
     else:
-        print("No optimal objective set")
+        opt_objective = opt_obj_dict[optimal_objective]
+
+    planner.set_optim_objective(opt_objective)
 
     solved = planner.solve(timeout=60.0)[0]
 

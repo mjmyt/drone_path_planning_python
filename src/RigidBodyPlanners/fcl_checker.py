@@ -133,6 +133,17 @@ class Fcl_checker():
 
         return is_collision
 
+    def get_distance_from_obstacle(self, T=None, q=[0, 0, 0, 1]):
+        if T != None:
+            self.robot.set_transform(T, q)
+
+        request = fcl.DistanceRequest()
+        result = fcl.DistanceResult()
+
+        distance = fcl.distance(self.robot.collision_object, self.env.collision_object, request, result)
+
+        return distance
+
     def set_robot_transform(self, T, q=[0, 0, 0, 1]):
         self.robot.set_transform(T, q)
 

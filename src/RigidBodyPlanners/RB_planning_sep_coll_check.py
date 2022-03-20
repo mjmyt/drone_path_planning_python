@@ -91,11 +91,16 @@ class PlannerSepCollision:
         self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.01)
 
     def set_optim_objective(self, objective_class=ob.MechanicalWorkOptimizationObjective):
+        if objective_class == None:
+            return 0
+
+        txt = "Using Optimization Objective: "+str(objective_class)
+        rospy.logwarn(txt)
         try:
             self.ss.setOptimizationObjective(
                 objective_class(self.ss.getSpaceInformation()))
         except Exception as e:
-            print("Error setting optimization objective:", e)
+            print("Trying a different way of setting optimization...")
             self.ss.setOptimizationObjective(objective_class)
 
     def set_planner(self, planner_class=og.RRT):
