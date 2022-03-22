@@ -6,7 +6,6 @@ import rospy
 from trajectory_visualising import get_nav_path_msg
 from trajectory_visualising import Trajectory
 import os
-print(os.getcwd())
 
 
 if __name__ == "__main__":

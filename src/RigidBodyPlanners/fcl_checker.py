@@ -168,8 +168,6 @@ def check_collision_detect_test():
 
 
 if __name__ == '__main__':
-    print("cwd", os.getcwd())
-
     env_mesh_name = "src/drone_path_planning/resources/stl/env-scene-hole.stl"
     robot_mesh_name = "src/drone_path_planning/resources/stl/robot-scene-triangle.stl"
 

@@ -35,7 +35,6 @@ except ImportError:
     from goal_states import MyGoalRegion
 
 import os
-print("cwd:", os.getcwd())
 
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
@@ -82,13 +81,12 @@ class PlannerSepCollision:
         print("Space Bounds Low:", self.space.getBounds().low[0], self.space.getBounds().low[1], self.space.getBounds().low[2],
               self.space.getBounds().low[3], self.space.getBounds().low[4])
 
-    def setup(self):
+    def setup(self, val_checking_resolution=0.01):
         self.ss = og.SimpleSetup(self.space)
         # set State Validity Checker function
-        self.ss.setStateValidityChecker(
-            ob.StateValidityCheckerFn(self.isStateValid))
+        self.ss.setStateValidityChecker(ob.StateValidityCheckerFn(self.isStateValid))
 
-        self.ss.getSpaceInformation().setStateValidityCheckingResolution(0.01)
+        self.ss.getSpaceInformation().setStateValidityCheckingResolution(val_checking_resolution)
 
     def set_optim_objective(self, objective_class=ob.MechanicalWorkOptimizationObjective):
         if objective_class == None:

@@ -6,6 +6,7 @@ calculate_new_path: True
 env_mesh: "env-scene-ltu-experiment-hole-inclined"
 
 #Planning
+val_check_resolution: 0.01
 use_mesh_improvement: True
 use_dynamic_goal: False
 

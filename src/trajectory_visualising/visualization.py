@@ -11,7 +11,6 @@ except ImportError:
     from uav_trajectory import *
 
 import os
-print("Current directory:", os.getcwd())
 
 
 def visualize_python(tr: Trajectory, timestep: float):

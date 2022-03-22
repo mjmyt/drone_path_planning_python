@@ -16,7 +16,7 @@ except:
 from optimizations import *
 
 # print working directory
-print("Current working directory:", os.getcwd())
+# print("Current working directory:", os.getcwd())
 
 
 def callback1(path: Path):

@@ -19,7 +19,7 @@ from drone_path_planning.msg import rigid_body_dynamic_path
 from RigidBodyPlanners import Custom_robot_mesh
 
 # print working directory
-print("Current working directory:", os.getcwd())
+# print("Current working directory:", os.getcwd())
 
 
 drone_pose = PoseStamped()

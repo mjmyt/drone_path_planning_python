@@ -426,7 +426,6 @@ def test_cat_lowest_function(p0, p1, L):
 
 
 if __name__ == "__main__":
-    print("cwd: ", os.getcwd())
     drones_distance = 1
     theta = 0
     L = 2

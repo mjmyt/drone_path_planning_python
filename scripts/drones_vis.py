@@ -10,7 +10,7 @@ from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, Point, Quaternion
 
 # print working directory
-print("Current working directory:", os.getcwd())
+# print("Current working directory:", os.getcwd())
 
 
 def main_without_dyn_planning():

@@ -28,7 +28,7 @@ rospack = rospkg.RosPack()
 pkg_drone_path_planning_path = rospack.get_path('drone_path_planning')
 
 
-print("Current working directory:", os.getcwd())
+# print("Current working directory:", os.getcwd())
 DRONES_NUMBER = 5
 
 # get command line arguments
@@ -269,6 +269,7 @@ def get_planner_from_parameters():
     use_mesh_improvement = rospy.get_param('planning/use_mesh_improvement')
     use_dynamic_goal = rospy.get_param('planning/use_dynamic_goal')
     optimal_objective = rospy.get_param('planning/optimal_objective')
+    val_check_resolution = rospy.get_param('planning/val_check_resolution')
     # safety distances
     safety_distances = rospy.get_param('planning/safety_distances')
 
@@ -310,7 +311,7 @@ def get_planner_from_parameters():
     # Set bounds
     planner.set_bounds(bounds)
 
-    planner.setup()
+    planner.setup(val_checking_resolution=val_check_resolution)
 
     # Set start and goal
     start_pose, goal_pose = get_start_goal_poses(start, goal)
