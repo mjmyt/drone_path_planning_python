@@ -14,6 +14,7 @@ import os
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 from RigidBodyPlanners import *
+import yaml
 
 from ompl import base as ob
 from ompl import geometric as og
@@ -263,22 +264,8 @@ def get_start_goal_poses(start, goal):
 
 
 def get_planner_from_parameters():
-    calc_new_path = rospy.get_param('planning/calculate_new_path')
-    rope_length = rospy.get_param('planning/rope_length')
-    env_mesh = rospy.get_param('planning/env_mesh')
-    use_mesh_improvement = rospy.get_param('planning/use_mesh_improvement')
-    use_dynamic_goal = rospy.get_param('planning/use_dynamic_goal')
-    optimal_objective = rospy.get_param('planning/optimal_objective')
-    val_check_resolution = rospy.get_param('planning/val_check_resolution')
-    # safety distances
-    safety_distances = rospy.get_param('planning/safety_distances')
-
-    start = rospy.get_param('planning/start')
-    goal = rospy.get_param('planning/goal')
-
-    bounds = rospy.get_param('planning/bounds')
-
-    planner_algorithm = rospy.get_param('planning/planner_algorithm')
+    (calc_new_path, rope_length, env_mesh, use_mesh_improvement, use_dynamic_goal, optimal_objective,
+     val_check_resolution, safety_distances, start, goal, bounds, planner_algorithm, timeout) = load_parameters(use_parameters_from_ros)
 
     # robot marker initialization
     robot_mesh = "robot-scene-triangle"
@@ -310,8 +297,7 @@ def get_planner_from_parameters():
 
     # Set bounds
     planner.set_bounds(bounds)
-
-    planner.setup(val_checking_resolution=val_check_resolution)
+    planner.createSimpleSetup()
 
     # Set start and goal
     start_pose, goal_pose = get_start_goal_poses(start, goal)
@@ -325,22 +311,65 @@ def get_planner_from_parameters():
     # Set optimal objective
     si = planner.ss.getSpaceInformation()
 
-    opt_obj_dict = {}
-    opt_obj_dict["None"] = None
-    opt_obj_dict["balanced"] = getBalancedObjective(si, rope_length=planner.L, cost_threshold=11)
-    opt_obj_dict["obstacle_clearance"] = getObstacleClearanceObjective(si, planner.L, planner.custom_robot, planner.checker,
-                                                                       threshold=5)
+    planner.set_optim_objective(optimal_objective)
+    planner.set_valid_state_checker(val_checking_resolution=val_check_resolution)
 
-    if optimal_objective not in opt_obj_dict:
-        optimal_objective = eval(optimal_objective)
-    else:
-        opt_objective = opt_obj_dict[optimal_objective]
-
-    planner.set_optim_objective(opt_objective)
-
-    solved = planner.solve(timeout=60.0)[0]
+    solved = planner.solve(timeout=timeout)[0]
 
     return solved, rb, robPub, env, envPub
+
+
+def load_parameters(use_parameters_from_ros):
+    if use_parameters_from_ros == "1":
+        print("Using parameters from ROS...")
+        # Load parameters from ros parameter server
+        calc_new_path = rospy.get_param('planning/calculate_new_path')
+        rope_length = rospy.get_param('planning/rope_length')
+        env_mesh = rospy.get_param('planning/env_mesh')
+        use_mesh_improvement = rospy.get_param('planning/use_mesh_improvement')
+        use_dynamic_goal = rospy.get_param('planning/use_dynamic_goal')
+        optimal_objective = rospy.get_param('planning/optimal_objective')
+        val_check_resolution = rospy.get_param('planning/val_check_resolution')
+        # safety distances
+        safety_distances = rospy.get_param('planning/safety_distances')
+
+        start = rospy.get_param('planning/start')
+        goal = rospy.get_param('planning/goal')
+
+        bounds = rospy.get_param('planning/bounds')
+
+        planner_algorithm = rospy.get_param('planning/planner_algorithm')
+        timeout = rospy.get_param('planning/timeout')
+    else:
+        print("Using parameters from file...")
+        file_name = "/home/marios/thesis_ws/src/drone_path_planning/config/prob_definitiion.yaml"
+        # load parameters from yaml file
+        with open(file_name, 'r') as stream:
+            try:
+                parameters = yaml.load(stream, Loader=yaml.FullLoader)
+            except yaml.YAMLError as exc:
+                rospy.logerr(exc)
+                exit(0)
+        calc_new_path = parameters['calculate_new_path']
+        rope_length = parameters['rope_length']
+        env_mesh = parameters['env_mesh']
+        use_mesh_improvement = parameters['use_mesh_improvement']
+        use_dynamic_goal = parameters['use_dynamic_goal']
+        optimal_objective = parameters['optimal_objective']
+        val_check_resolution = parameters['val_check_resolution']
+        # safety distances
+        safety_distances = parameters['safety_distances']
+
+        start = parameters['start']
+        goal = parameters['goal']
+
+        bounds = parameters['bounds']
+
+        planner_algorithm = parameters['planner_algorithm']
+        timeout = parameters['timeout']
+
+    return calc_new_path, rope_length, env_mesh, use_mesh_improvement, use_dynamic_goal, optimal_objective, val_check_resolution, \
+        safety_distances, start, goal, bounds, planner_algorithm, timeout
 
 
 def main_working():
@@ -373,7 +402,7 @@ def main_working():
 
     # path
     # data = load_saved_path()
-    data = load_saved_path(filename='ltu_path-90deg_turns.txt')
+    data = load_saved_path(filename='path_V_shape.txt')
 
     # generate dynamic path msg
     # path = getPath(data)
@@ -430,12 +459,15 @@ def main_working():
 
 
 if __name__ == "__main__":
-
+    # 0: use parameters from file, 1: use parameters from ros
+    use_parameters_from_ros = 1 if len(sys.argv) == 1 else sys.argv[1]
+    print("use_parameters_from_ros:", use_parameters_from_ros)
     rospy.init_node("rb_path_planning")
     # Load parameters
     solved, rb, robPub, env, envPub = get_planner_from_parameters()
 
-    data = load_saved_path(filename='path.txt')
+    # data = load_saved_path(filename='path.txt')
+    data = load_saved_path(filename='path_V_shape.txt')
 
     # generate dynamic path msg
     # path = getPath(data)

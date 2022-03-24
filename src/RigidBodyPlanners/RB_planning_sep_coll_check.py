@@ -29,12 +29,15 @@ try:
     from .fcl_checker import Fcl_checker
     from .custom_robot_mesh import Custom_robot_mesh, Custom_robot_mesh_improvement
     from .goal_states import MyGoalRegion
-except ImportError:
+
+except ImportError as e:
+    print(e)
     from fcl_checker import Fcl_checker
     from custom_robot_mesh import Custom_robot_mesh
     from goal_states import MyGoalRegion
 
 import os
+from .optimization_objectives import get_optimization_obj
 
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
@@ -76,37 +79,27 @@ class PlannerSepCollision:
         # print("Setting default Optimization Objective (Path Length)")
         # self.set_optim_objective(ob.PathLengthOptimizationObjective)
 
-        print("Space Bounds High:", self.space.getBounds().high[0], self.space.getBounds().high[1], self.space.getBounds().high[2],
-              self.space.getBounds().high[3], self.space.getBounds().high[4])
-        print("Space Bounds Low:", self.space.getBounds().low[0], self.space.getBounds().low[1], self.space.getBounds().low[2],
-              self.space.getBounds().low[3], self.space.getBounds().low[4])
-
-    def setup(self, val_checking_resolution=0.01):
-        self.ss = og.SimpleSetup(self.space)
+    def set_valid_state_checker(self, val_checking_resolution=0.01):
         # set State Validity Checker function
         self.ss.setStateValidityChecker(ob.StateValidityCheckerFn(self.isStateValid))
-
+        print("Validity Checker Resolution:", val_checking_resolution)
         self.ss.getSpaceInformation().setStateValidityCheckingResolution(val_checking_resolution)
 
-    def set_optim_objective(self, objective_class=ob.MechanicalWorkOptimizationObjective):
+    def set_optim_objective(self, optimal_objective_dict):
+        objective_class = get_optimization_obj(optimal_objective_dict, self)
         if objective_class == None:
             return 0
 
         txt = "Using Optimization Objective: "+str(objective_class)
         rospy.logwarn(txt)
-        try:
-            self.ss.setOptimizationObjective(
-                objective_class(self.ss.getSpaceInformation()))
-        except Exception as e:
-            print("Trying a different way of setting optimization...")
-            self.ss.setOptimizationObjective(objective_class)
+        self.ss.setOptimizationObjective(objective_class)
 
     def set_planner(self, planner_class=og.RRT):
         # choose planner
         planner = planner_class(self.ss.getSpaceInformation())
-
+        print("Using Planner:", planner_class)
         self.ss.setPlanner(planner)
-        self.ss.setup()
+        # self.ss.setup()
 
     def set_safety_distances(self, safety_distances):
         self.custom_robot.enable_safe_distances(drones_distance=safety_distances['drones'],
@@ -132,7 +125,14 @@ class PlannerSepCollision:
 
         self.space.setBounds(bounds)
 
+        print("Space Bounds High:", self.space.getBounds().high[0], self.space.getBounds().high[1], self.space.getBounds().high[2],
+              self.space.getBounds().high[3], self.space.getBounds().high[4])
+        print("Space Bounds Low:", self.space.getBounds().low[0], self.space.getBounds().low[1], self.space.getBounds().low[2],
+              self.space.getBounds().low[3], self.space.getBounds().low[4])
         return bounds
+
+    def createSimpleSetup(self):
+        self.ss = og.SimpleSetup(self.space)
 
     def save_path(self, file_name="path.txt"):
         # save the path
@@ -198,8 +198,6 @@ class PlannerSepCollision:
         print("\t drones angle: %.2f" % np.rad2deg(state[5]), "deg")
 
     def solve(self, timeout=15.0):
-        #
-
         # this will automatically choose a default planner with
         # default parameters
         print(f"Solving with timeout: {timeout} sec...")
@@ -290,8 +288,8 @@ class PlannerSepCollision:
 
         dt = rospy.get_time()-t0
         self.time_sum += dt
-        if (self.states_tried % 500) == 0:
-            print("Tried {} states --> average time: {} msec".format(self.states_tried,
+        if (self.states_tried % 10) == 0:
+            print("                         Tried {} states --> average time: {} msec".format(self.states_tried,
                   self.time_sum / self.states_tried*1000), end="")
             print("\r", end="")
 
