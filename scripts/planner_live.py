@@ -23,19 +23,12 @@ from catenaries.srv import CatLowestPoint, CatLowestPointResponse
 
 from catenary import catenaries
 
+from drone_path_planning.msg import planning_state
+
 import rospkg
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
 pkg_drone_path_planning_path = rospack.get_path('drone_path_planning')
-
-
-# print("Current working directory:", os.getcwd())
-DRONES_NUMBER = 5
-
-# get command line arguments
-CALCULATE_PATH = len(sys.argv) == 1 or sys.argv[1] == '1' or sys.argv[1].lower() == 'true'
-
-PLANNERS_COMPARISON = 0
 
 
 class MeshMarker(Marker):
@@ -143,94 +136,6 @@ def generate_dynamic_path_msg(data):
     return dynamic_path_msg
 
 
-def calculate_path_FCL(robot_mesh_name, env_mesh_name):
-    robot_mesh_name += ".stl"
-    env_mesh_name += ".stl"
-
-    print("robot_mesh_name:", robot_mesh_name)
-    print("env_mesh_name:", env_mesh_name)
-
-    planner = PlannerSepCollision(env_mesh_name, robot_mesh_name, catenaries.lowest_point_optimized, use_mesh_improvement=False)
-
-    start = [-0.5, 3, 0.75]
-    goal = [+0.5, 5, 0.75]
-
-    start_pose = PoseStamped()
-    start_pose.pose.position.x, start_pose.pose.position.y, start_pose.pose.position.z = start
-    q = tf.quaternion_from_euler(0, 0, 0)
-    start_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
-
-    goal_pose = PoseStamped()
-    goal_pose.pose.position.x, goal_pose.pose.position.y, goal_pose.pose.position.z = goal
-    q = tf.quaternion_from_euler(0, 0, 0)
-    goal_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
-
-    planner.set_start_goal(start_pose.pose, goal_pose.pose)
-    if PLANNERS_COMPARISON:
-        # list of all available og planners (maybe some are missing)
-        planners = ['RRT', 'ABITstar', 'AITstar', 'BFMT', 'BITstar', 'BKPIECE1', 'BiEST',
-                    'EST', 'FMT', 'InformedRRTstar', 'KPIECE1', 'KStarStrategy', 'KStrategy', 'LBKPIECE1', 'LBTRRT', 'LazyLBTRRT',
-                    'LazyPRM', 'LazyPRMstar', 'LazyRRT', 'NearestNeighbors', 'NearestNeighborsLinear', 'NumNeighborsFn',
-                    'PDST', 'PRM', 'PRMstar', 'ProjEST',
-                    'QRRT', 'RRT', 'RRTConnect', 'RRTXstatic', 'RRTsharp', 'RRTstar', 'SBL', 'SORRTstar', 'SPARS', 'SPARStwo', 'SST']
-        # planners = ['RRT', 'RRTConnect', 'RRTXstatic', 'RRTsharp']
-        # solution_time ,states_tried,path_cost
-        length_optim_objective = ob.PathLengthOptimizationObjective(
-            planner.ss.getSpaceInformation())
-
-        planners_results = np.zeros((4, len(planners)))
-        for i, planner_name in enumerate(planners):
-            print(
-                "================================ %s ================================" % planner_name)
-            planner_class = eval('og.' + planner_name)
-            print(planner_class)
-            try:
-                planner.set_planner(planner_class)
-                t0 = rospy.get_time()
-
-                path, time, states_tried, avrg_time_per_valid_check = planner.solve(
-                    timeout=60.0)
-                path_cost = planner.path.cost(length_optim_objective)
-                path_cost = float(path_cost.value())
-            except Exception as e:
-                print(e)
-                continue
-
-            planners_results[0, i] = rospy.get_time() - t0
-            planners_results[1, i] = states_tried
-            planners_results[2, i] = avrg_time_per_valid_check
-            planners_results[3, i] = path_cost
-
-            print("===============================================================")
-
-            # save matrix as csv file at every iteration1
-            file_name = pkg_drone_path_planning_path+'/resources/planners_results.csv'
-            np.savetxt(file_name, planners_results,
-                       delimiter=",", fmt='%f', header=",".join(planners))
-
-    # planner.set_planner(og.RRTstar)
-    planner.set_planner(og.RRT)
-    opt_objective = getBalancedObjective(
-        planner.ss.getSpaceInformation(),  rope_length=planner.L, cost_threshold=11)
-
-    # planner.set_optim_objective(opt_objective)
-    path = planner.solve(timeout=60.0)[0]
-    # planner.visualize_path()
-
-
-def get_cat_lowest_function_service():
-    print("Waiting for cat_lowest_function service...")
-    rospy.wait_for_service('catenary_lowest_point')
-    try:
-        catenary_lowest = rospy.ServiceProxy(
-            'catenary_lowest_point', CatLowestPoint)
-
-    except rospy.ServiceException as e:
-        print("Service call failed: %s" % e)
-
-    return catenary_lowest
-
-
 def load_saved_path(filename='path.txt'):
     try:
         # get the file path of droen_path_planning package
@@ -303,7 +208,7 @@ def get_planner_from_parameters(start: list = None):
         start = start_from_yaml
     else:
         start_dict = {}
-        start_dict['x'], start_dict['y'], start_dict['z'] = start[0], start[1], start[2]
+        start_dict['x'], start_dict['y'], start_dict['z'] = start.x, start.y, start.z
         start = start_dict
 
     start_pose, goal_pose = get_start_goal_poses(start, goal)
@@ -378,36 +283,21 @@ def load_parameters(use_parameters_from_ros):
         safety_distances, start, goal, bounds, planner_algorithm, timeout
 
 
-def main_working():
-    rospy.init_node("rb_path_planning")
-    # Load parameters
-    robot_mesh_name = "robot-scene-triangle"
-    env_mesh_name = "env-scene-ltu-experiment-hole-inclined"
-    # env_mesh_name = "env-scene-ltu-experiment-corridor-narrow"
+def start_planner_callback(msg):
+    # x,y,z,yaw,drones_distance,drones_angle
+    planner_start = msg
+    print("Planner start state:", planner_start)
+    solved, rb, robPub, env, envPub = get_planner_from_parameters(planner_start)
+    if not solved:
+        rospy.logerr("Path not found! Shutting down node...")
+        sys.exit(0)
 
-    # robot marker initialization
-    mesh = "package://drone_path_planning/resources/collada/{}.dae".format(
-        robot_mesh_name)
-    rb = MeshMarker(id=0, mesh_path=mesh)
-    robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
+    data, dynamic_path = publish_data_after_planning()
+    visualize_in_rviz(data, dynamic_path, rb, robPub, env, envPub)
 
-    # Environment marker initialization
-    mesh = "package://drone_path_planning/resources/collada/{}.dae".format(
-        env_mesh_name)
-    env = MeshMarker(id=1, mesh_path=mesh)
-    env.color.r, env.color.g, env.color.b = 1, 0, 0
-    env.updatePose([0, 0, 0], [0, 0, 0, 1])
-    envPub = rospy.Publisher('rb_environment',  Marker, queue_size=10)
 
-    # calculate path
-    if CALCULATE_PATH:
-        print("Calculating path...")
-        calculate_path_FCL(robot_mesh_name, env_mesh_name)
-    else:
-        print("Using already calculated path...")
-
-    # path
-    # data = load_saved_path()
+def publish_data_after_planning():
+    # data = load_saved_path(filename='path.txt')
     data = load_saved_path(filename='path_V_shape.txt')
 
     # generate dynamic path msg
@@ -415,11 +305,7 @@ def main_working():
     dynamic_path = generate_dynamic_path_msg(data)
     print("Loaded and generated dynamic path")
 
-    trajPub = rospy.Publisher('rigiBodyPath',  Path, queue_size=10)
     trajPub.publish(dynamic_path.Path)
-
-    dynamic_path_pub = rospy.Publisher(
-        'dynamicRigiBodyPath', rigid_body_dynamic_path, queue_size=10)
 
     print("Waiting for connections to the  /dynamicRigiBodyPath topic...")
     while dynamic_path_pub.get_num_connections() == 0:
@@ -430,9 +316,10 @@ def main_working():
     dynamic_path_pub.publish(dynamic_path)
     print("Published dynamic path!")
 
-    # transform
-    br = tf.TransformBroadcaster()
+    return data, dynamic_path
 
+
+def visualize_in_rviz(data, dynamic_path, rb: MeshMarker, robPub: rospy.Publisher, env: MeshMarker, envPub: rospy.Publisher):
     i = 0
     rate = rospy.Rate(10.0)  # hz
     while not rospy.is_shutdown():
@@ -469,61 +356,11 @@ if __name__ == "__main__":
     use_parameters_from_ros = 1 if len(sys.argv) == 1 else sys.argv[1]
     print("use_parameters_from_ros:", use_parameters_from_ros)
     rospy.init_node("rb_path_planning")
-    # Load parameters
-    solved, rb, robPub, env, envPub = get_planner_from_parameters()
-
-    # data = load_saved_path(filename='path.txt')
-    data = load_saved_path(filename='path_V_shape.txt')
-
-    # generate dynamic path msg
-    # path = getPath(data)
-    dynamic_path = generate_dynamic_path_msg(data)
-    print("Loaded and generated dynamic path")
-
+    start_planner_sub = rospy.Subscriber("/start_planning", planning_state, start_planner_callback)
     trajPub = rospy.Publisher('rigiBodyPath',  Path, queue_size=10)
-    trajPub.publish(dynamic_path.Path)
-
-    dynamic_path_pub = rospy.Publisher(
-        'dynamicRigiBodyPath', rigid_body_dynamic_path, queue_size=10)
-
-    print("Waiting for connections to the  /dynamicRigiBodyPath topic...")
-    while dynamic_path_pub.get_num_connections() == 0:
-        if rospy.is_shutdown():
-            sys.exit()
-
-    print("Publishing dynamic path...")
-    dynamic_path_pub.publish(dynamic_path)
-    print("Published dynamic path!")
+    dynamic_path_pub = rospy.Publisher('dynamicRigiBodyPath', rigid_body_dynamic_path, queue_size=10)
 
     # transform
     br = tf.TransformBroadcaster()
 
-    i = 0
-    rate = rospy.Rate(10.0)  # hz
-    while not rospy.is_shutdown():
-        rospy.sleep(0.1)
-        br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(-math.pi/2, 0, 0), rospy.Time.now(),
-                         "world", "ompl")
-
-        if i == data.shape[0]-1:
-            i = 0
-        else:
-            i += 1
-
-        rb.updatePose(dynamic_path.Path.poses[i].pose.position,
-                      dynamic_path.Path.poses[i].pose.orientation, frame="world")
-
-        robPub.publish(rb)
-
-        pos = (rb.pose.position.x, rb.pose.position.y, rb.pose.position.z)
-        orientation = (rb.pose.orientation.x, rb.pose.orientation.y,
-                       rb.pose.orientation.z, rb.pose.orientation.w)
-
-        br.sendTransform(pos, orientation, rospy.Time.now(),
-                         "rigid_body", "world")
-
-        envPub.publish(env)
-        # trajPub.publish(path)
-        trajPub.publish(dynamic_path.Path)
-
-        rate.sleep()
+    rospy.spin()

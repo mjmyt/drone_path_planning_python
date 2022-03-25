@@ -67,6 +67,7 @@ catkin_python_setup()
 add_message_files(
   FILES
   rigid_body_dynamic_path.msg
+  planning_state.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -193,6 +194,7 @@ install(PROGRAMS
   scripts/drones_traj_generator.py
   scripts/drones_pols_generator.py
   scripts/stl_creation.py
+  scripts/planner_live.py
 
   
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

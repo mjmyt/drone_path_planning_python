@@ -149,8 +149,7 @@ def listener():
     rospy.init_node('rb_path_listener', anonymous=True)
 
     # rospy.Subscriber('rigiBodyPath', Path, callback)
-    rospy.Subscriber('dynamicRigiBodyPath',
-                     rigid_body_dynamic_path, dynamic_callback)
+    rospy.Subscriber('dynamicRigiBodyPath', rigid_body_dynamic_path, dynamic_callback)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
