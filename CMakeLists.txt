@@ -195,7 +195,6 @@ install(PROGRAMS
   scripts/drones_pols_generator.py
   scripts/stl_creation.py
   scripts/planner_live.py
-
   
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
