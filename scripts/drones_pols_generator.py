@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 from geometry_msgs.msg import TransformStamped, Quaternion
 import rospy
 import numpy as np
@@ -118,7 +119,7 @@ class PolsGenerator:
 
     def path_callback(self, path):
         self.paths.append(path)
-        print("Drones pols generator: received path")
+        print("Drones pols generator: received path and total # of paths is {}".format(len(self.paths)))
         if len(self.paths) == self.DRONES_NUM:
             self.generate_pols()
 
@@ -142,12 +143,21 @@ class PolsGenerator:
         leader_pol, leader_matrix = path_to_pol(leader_path, 0)
         follower_pol, follower_matrix = path_to_pol(follower_path, 1)
 
-        self.publish_pols(leader_pol, follower_pol)
         self.save_pols(leader_matrix, follower_matrix)
+        self.publish_pols(leader_pol, follower_pol)
 
     def publish_pols(self, leader_pol, follower_pol):
         if self.published_pols == 1:
             return
+
+        # wait to get connections
+        print("Drones pols generator: waiting for connections")
+        while piece_pols_pub.get_num_connections() < 2:
+            rospy.sleep(0.1)
+            if rospy.is_shutdown():
+                print("Drones pols generator: ros shutdown")
+                sys.exit()
+
         piece_pols_pub.publish(leader_pol)
         piece_pols_pub.publish(follower_pol)
         print("Drones pols generator: Published pols ")
@@ -159,6 +169,7 @@ class PolsGenerator:
         # np.savetxt(file_prefix+"Pol_matrix_{}.csv".format(1), follower_matrix, delimiter=",")
         np.savetxt(file_prefix+"Pol_matrix_leader.csv", leader_matrix, delimiter=",")
         np.savetxt(file_prefix+"Pol_matrix_follower.csv", follower_matrix, delimiter=",")
+        print("Drones pols generator: Saved pols ")
 
     def leader_distance_from_pos(self, position: list):
         l = [self.leader_pos.pose.pose.position.x, self.leader_pos.pose.pose.position.y,

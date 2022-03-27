@@ -224,7 +224,7 @@ class PlannerSepCollision:
             print("No solution found")
             return None, 0, 0, 0
 
-        return solved, self.time_sum, self.states_tried, self.time_sum/self.states_tried
+        return solved, self.time_sum, self.states_tried, self.time_sum/self.states_tried*1000
 
     def visualize_path(self, path_file="path.txt"):
         try:

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # print working directory
 import sys
+from std_msgs.msg import String
 from drone_path_planning.msg import rigid_body_dynamic_path
 from geometry_msgs.msg import TransformStamped, Quaternion
 import math
@@ -225,7 +226,8 @@ def get_planner_from_parameters(start: list = None):
     planner.set_optim_objective(optimal_objective)
     planner.set_valid_state_checker(val_checking_resolution=val_check_resolution)
 
-    solved = planner.solve(timeout=timeout)[0]
+    solved, time, states_tried, avg_time = planner.solve(timeout=timeout)
+    print("Tried {} states --> Average time: {} msec".format(states_tried, avg_time))
 
     return solved, rb, robPub, env, envPub
 
@@ -286,19 +288,24 @@ def load_parameters(use_parameters_from_ros):
 def start_planner_callback(msg):
     # x,y,z,yaw,drones_distance,drones_angle
     planner_start = msg
-    print("Planner start state:", planner_start)
+    print("Planner start state:")
+    print("position:", [planner_start.x, planner_start.y, planner_start.z])
+    print("yaw", np.rad2deg(planner_start.yaw), "deg")
+    print("drones_distance", planner_start.drones_distance)
+    print("drones_angle", np.rad2deg(planner_start.drones_angle), "deg")
+
     solved, rb, robPub, env, envPub = get_planner_from_parameters(planner_start)
     if not solved:
         rospy.logerr("Path not found! Shutting down node...")
         sys.exit(0)
 
+    finished_planning_sub.publish("Finished planning")
     data, dynamic_path = publish_data_after_planning()
     visualize_in_rviz(data, dynamic_path, rb, robPub, env, envPub)
 
 
 def publish_data_after_planning():
-    # data = load_saved_path(filename='path.txt')
-    data = load_saved_path(filename='path_V_shape.txt')
+    data = load_saved_path(filename='path.txt')
 
     # generate dynamic path msg
     # path = getPath(data)
@@ -359,7 +366,7 @@ if __name__ == "__main__":
     start_planner_sub = rospy.Subscriber("/start_planning", planning_state, start_planner_callback)
     trajPub = rospy.Publisher('rigiBodyPath',  Path, queue_size=10)
     dynamic_path_pub = rospy.Publisher('dynamicRigiBodyPath', rigid_body_dynamic_path, queue_size=10)
-
+    finished_planning_sub = rospy.Publisher("/finished_planning", String, queue_size=10)
     # transform
     br = tf.TransformBroadcaster()
 
