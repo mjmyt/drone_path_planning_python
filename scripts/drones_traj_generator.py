@@ -148,6 +148,14 @@ def listener():
     # run simultaneously.
     rospy.init_node('rb_path_listener', anonymous=True)
 
+    while trajPub1.get_num_connections() == 0:
+        print("Waiting for connection...")
+        rospy.sleep(0.5)
+
+    while trajPub2.get_num_connections() == 0:
+        print("Waiting for connection...")
+        rospy.sleep(0.5)
+
     # rospy.Subscriber('rigiBodyPath', Path, callback)
     rospy.Subscriber('dynamicRigiBodyPath', rigid_body_dynamic_path, dynamic_callback)
 

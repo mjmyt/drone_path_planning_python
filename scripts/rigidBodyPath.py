@@ -20,7 +20,7 @@ from ompl import base as ob
 from ompl import geometric as og
 
 from catenaries.srv import CatLowestPoint, CatLowestPointResponse
-
+from std_msgs.msg import String
 from catenary import catenaries
 
 import rospkg
@@ -321,6 +321,9 @@ def get_planner_from_parameters(start: list = None):
     planner.set_valid_state_checker(val_checking_resolution=val_check_resolution)
 
     solved = planner.solve(timeout=timeout)[0]
+    if solved:
+        print("Path found")
+        finished_planning_pub.publish("Path found")
 
     return solved, rb, robPub, env, envPub
 
@@ -408,7 +411,7 @@ def main_working():
 
     # path
     # data = load_saved_path()
-    data = load_saved_path(filename='path_V_shape.txt')
+    data = load_saved_path(filename='path.txt')
 
     # generate dynamic path msg
     # path = getPath(data)
@@ -466,14 +469,15 @@ def main_working():
 
 if __name__ == "__main__":
     # 0: use parameters from file, 1: use parameters from ros
+    finished_planning_pub = rospy.Publisher("/finished_planning", String, queue_size=10)
+
     use_parameters_from_ros = 1 if len(sys.argv) == 1 else sys.argv[1]
     print("use_parameters_from_ros:", use_parameters_from_ros)
     rospy.init_node("rb_path_planning")
     # Load parameters
     solved, rb, robPub, env, envPub = get_planner_from_parameters()
 
-    # data = load_saved_path(filename='path.txt')
-    data = load_saved_path(filename='path_V_shape.txt')
+    data = load_saved_path(filename='path.txt')
 
     # generate dynamic path msg
     # path = getPath(data)
@@ -481,10 +485,12 @@ if __name__ == "__main__":
     print("Loaded and generated dynamic path")
 
     trajPub = rospy.Publisher('rigiBodyPath',  Path, queue_size=10)
+
     trajPub.publish(dynamic_path.Path)
 
-    dynamic_path_pub = rospy.Publisher(
-        'dynamicRigiBodyPath', rigid_body_dynamic_path, queue_size=10)
+    finished_planning_pub = rospy.Publisher("/finished_planning", String, queue_size=10)
+
+    dynamic_path_pub = rospy.Publisher('dynamicRigiBodyPath', rigid_body_dynamic_path, queue_size=10)
 
     print("Waiting for connections to the  /dynamicRigiBodyPath topic...")
     while dynamic_path_pub.get_num_connections() == 0:
