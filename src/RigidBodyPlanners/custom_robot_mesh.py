@@ -61,7 +61,7 @@ class Custom_robot_mesh():
 
     def get_triangle_3D_points(p0, p1, p2):
         # Created a matrix with all the vertices needed for the 3D triangle
-        thickness = 0.3  # thickness of the triangle ,maybe should be a parameter
+        thickness = 0.1  # thickness of the triangle ,maybe should be a parameter
         offset = 0  # TODO: makes this 0 (used for comapring with thhe old one)
 
         # print("p0: ", p0)

@@ -321,9 +321,6 @@ def get_planner_from_parameters(start: list = None):
     planner.set_valid_state_checker(val_checking_resolution=val_check_resolution)
 
     solved = planner.solve(timeout=timeout)[0]
-    if solved:
-        print("Path found")
-        finished_planning_pub.publish("Path found")
 
     return solved, rb, robPub, env, envPub
 
@@ -381,92 +378,6 @@ def load_parameters(use_parameters_from_ros):
         safety_distances, start, goal, bounds, planner_algorithm, timeout
 
 
-def main_working():
-    rospy.init_node("rb_path_planning")
-    # Load parameters
-    robot_mesh_name = "robot-scene-triangle"
-    env_mesh_name = "env-scene-ltu-experiment-hole-inclined"
-    # env_mesh_name = "env-scene-ltu-experiment-corridor-narrow"
-
-    # robot marker initialization
-    mesh = "package://drone_path_planning/resources/collada/{}.dae".format(
-        robot_mesh_name)
-    rb = MeshMarker(id=0, mesh_path=mesh)
-    robPub = rospy.Publisher('rb_robot',  Marker, queue_size=10)
-
-    # Environment marker initialization
-    mesh = "package://drone_path_planning/resources/collada/{}.dae".format(
-        env_mesh_name)
-    env = MeshMarker(id=1, mesh_path=mesh)
-    env.color.r, env.color.g, env.color.b = 1, 0, 0
-    env.updatePose([0, 0, 0], [0, 0, 0, 1])
-    envPub = rospy.Publisher('rb_environment',  Marker, queue_size=10)
-
-    # calculate path
-    if CALCULATE_PATH:
-        print("Calculating path...")
-        calculate_path_FCL(robot_mesh_name, env_mesh_name)
-    else:
-        print("Using already calculated path...")
-
-    # path
-    # data = load_saved_path()
-    data = load_saved_path(filename='path.txt')
-
-    # generate dynamic path msg
-    # path = getPath(data)
-    dynamic_path = generate_dynamic_path_msg(data)
-    print("Loaded and generated dynamic path")
-
-    trajPub = rospy.Publisher('rigiBodyPath',  Path, queue_size=10)
-    trajPub.publish(dynamic_path.Path)
-
-    dynamic_path_pub = rospy.Publisher(
-        'dynamicRigiBodyPath', rigid_body_dynamic_path, queue_size=10)
-
-    print("Waiting for connections to the  /dynamicRigiBodyPath topic...")
-    while dynamic_path_pub.get_num_connections() == 0:
-        if rospy.is_shutdown():
-            sys.exit()
-
-    print("Publishing dynamic path...")
-    dynamic_path_pub.publish(dynamic_path)
-    print("Published dynamic path!")
-
-    # transform
-    br = tf.TransformBroadcaster()
-
-    i = 0
-    rate = rospy.Rate(10.0)  # hz
-    while not rospy.is_shutdown():
-        rospy.sleep(0.1)
-        br.sendTransform((0, 0, 0), tf.transformations.quaternion_from_euler(-math.pi/2, 0, 0), rospy.Time.now(),
-                         "world", "ompl")
-
-        if i == data.shape[0]-1:
-            i = 0
-        else:
-            i += 1
-
-        rb.updatePose(dynamic_path.Path.poses[i].pose.position,
-                      dynamic_path.Path.poses[i].pose.orientation, frame="world")
-
-        robPub.publish(rb)
-
-        pos = (rb.pose.position.x, rb.pose.position.y, rb.pose.position.z)
-        orientation = (rb.pose.orientation.x, rb.pose.orientation.y,
-                       rb.pose.orientation.z, rb.pose.orientation.w)
-
-        br.sendTransform(pos, orientation, rospy.Time.now(),
-                         "rigid_body", "world")
-
-        envPub.publish(env)
-        # trajPub.publish(path)
-        trajPub.publish(dynamic_path.Path)
-
-        rate.sleep()
-
-
 if __name__ == "__main__":
     # 0: use parameters from file, 1: use parameters from ros
     finished_planning_pub = rospy.Publisher("/finished_planning", String, queue_size=10)
@@ -476,6 +387,9 @@ if __name__ == "__main__":
     rospy.init_node("rb_path_planning")
     # Load parameters
     solved, rb, robPub, env, envPub = get_planner_from_parameters()
+    if solved:
+        print("Path found")
+        finished_planning_pub.publish("Path found")
 
     data = load_saved_path(filename='path.txt')
 

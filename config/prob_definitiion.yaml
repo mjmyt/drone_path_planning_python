@@ -1,30 +1,31 @@
 visualization: True #TODO:icluse this option in launch file
 rope_length: 1.5
 calculate_new_path: True
-timeout: 40
+timeout: 120
 
-env_mesh: "env-scene-ltu-experiment-hole-inclined"
+# env_mesh: "env-scene-ltu-experiment-hole-inclined"
+env_mesh: "env-scene-ltu-experiment-tunnel2"
 
 #Planning
-val_check_resolution: 0.05
+val_check_resolution: 0.04
 use_mesh_improvement: True
 use_dynamic_goal: False
 
 #values:None, ob.PathLengthOptimizationObjective,balanced,obstacle_clearance
 optimal_objective: { class: "None", threshold: 3 }
 
-safety_distances: { drones: 0.1, lowest_point: 0.25 }
+safety_distances: { drones: 0.05, lowest_point: 0.05 }
 
 # start and goal
-start: { x: -0.5, y: 3, z: 0.75 }
-goal: { x: +0.5, y: 5, z: 0.75 }
+start: { x: -0.5, y: 2.5, z: 0.75 }
+goal: { x: +0.5, y: 5.25, z: 0.75 }
 
 # Bounds of states
 # All ANGLES are in DEGREES
 bounds: {
     #x,y,z,yaw,drones_distance,drones_angle
-    low: [-1.5, -2.8, 0.3, -180, 0.2, -60],
-    high: [1.5, 5.0, 2.5, 180, 0.9, 60],
+    low: [-1.5, 0.5, 0.3, -180, 0.5, -60],
+    high: [1.5, 6.0, 2.0, 180, 0.95, 60],
   }
 
 #planner algorithm

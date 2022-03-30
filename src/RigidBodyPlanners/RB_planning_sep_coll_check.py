@@ -279,6 +279,14 @@ class PlannerSepCollision:
             print("Ground collision")
             return False
 
+        # rope collision with rotors
+        # check the distance of the lowest drone from the lowest point of rope in z-axis
+        # if the distance is less than a safety threshold, then this state is not accepted
+        lowest_drone_z = abs(np.sin(theta))*drones_distance/2
+        rope_collision_threshold = 0.05  # m
+        if lowest_point_z-lowest_drone_z <= rope_collision_threshold:
+            return False
+
         self.checker.update_robot(self.custom_robot.mesh)
 
         self.checker.set_robot_transform(pos, q)
@@ -288,7 +296,7 @@ class PlannerSepCollision:
 
         dt = rospy.get_time()-t0
         self.time_sum += dt
-        if (self.states_tried % 10) == 0:
+        if (self.states_tried % 500) == 0:
             print("                         Tried {} states --> average time: {} msec".format(self.states_tried,
                   self.time_sum / self.states_tried*1000), end="")
             print("\r", end="")

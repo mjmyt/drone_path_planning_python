@@ -41,6 +41,7 @@ class Drone_path_vis:
     def __init__(self, id):
         self.id = id
         self.pose_counter = 0
+        self.path_received = False
 
     def receive_path(self, msg):
         print("Received path")
@@ -50,6 +51,9 @@ class Drone_path_vis:
     def broadcast_drone_pose(self, index=None):
         if index is None:
             index = self.pose_counter
+
+        if not self.path_received:
+            return
 
         drone_pose = self.path.poses[index]
         pos = drone_pose.pose.position.x, drone_pose.pose.position.y, drone_pose.pose.position.z

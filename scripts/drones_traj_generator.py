@@ -134,7 +134,7 @@ def dynamic_callback(dynamic_path: rigid_body_dynamic_path):
     print(len(dynamic_path.Path.poses))
 
     drone_path1, drone_path2 = dynamic_transform(dynamic_path)
-
+    rospy.sleep(2)
     trajPub1.publish(drone_path1)
     trajPub2.publish(drone_path2)
 

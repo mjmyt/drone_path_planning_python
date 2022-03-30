@@ -110,6 +110,7 @@ class PolsGenerator:
         self.paths = []
         self.DRONES_NUM = 2
         self.published_pols = 0
+        self.online_planning = True
 
     def leader_pos_callback(self, msg: Odometry):
         self.leader_pos = msg
@@ -151,17 +152,21 @@ class PolsGenerator:
             return
 
         # wait to get connections
+        if self.online_planning:
+            self.wait_for_executor_connections()
+
+        piece_pols_pub.publish(leader_pol)
+        piece_pols_pub.publish(follower_pol)
+        print("Drones pols generator: Published pols ")
+        self.published_pols = 1
+
+    def wait_for_executor_connections(self):
         print("Drones pols generator: waiting for connections")
         while piece_pols_pub.get_num_connections() < 2:
             rospy.sleep(0.1)
             if rospy.is_shutdown():
                 print("Drones pols generator: ros shutdown")
                 sys.exit()
-
-        piece_pols_pub.publish(leader_pol)
-        piece_pols_pub.publish(follower_pol)
-        print("Drones pols generator: Published pols ")
-        self.published_pols = 1
 
     def save_pols(self, leader_matrix, follower_matrix):
         file_prefix = "/home/marios/thesis_ws/src/drone_path_planning/resources/trajectories/"
@@ -188,23 +193,29 @@ def listener():
     rospy.init_node('drones_path_listener')
 
     pols_gen = PolsGenerator()
-    leader_cf_name = rospy.get_param("/cf_follower_name")
-    follower_cf_name = rospy.get_param("/cf_leader_name")
+    try:
+        # This code works in case of online planning
+        leader_cf_name = rospy.get_param("/cf_follower_name")
+        follower_cf_name = rospy.get_param("/cf_leader_name")
 
-    # get id after prefix
-    leader_id = get_executor_id(leader_cf_name)
-    follower_id = get_executor_id(follower_cf_name)
+        # get id after prefix
+        leader_id = get_executor_id(leader_cf_name)
+        follower_id = get_executor_id(follower_cf_name)
+
+        # drones positions subscriber
+        leader_top = '/pixy/vicon/demo_crazyflie{}/demo_crazyflie{}/odom'.format(leader_id, leader_id)
+        follower_top = '/pixy/vicon/demo_crazyflie{}/demo_crazyflie{}/odom'.format(follower_id, follower_id)
+
+        rospy.Subscriber(leader_top, Odometry,   pols_gen.leader_pos_callback)
+        rospy.Subscriber(follower_top, Odometry, pols_gen.follower_pos_callback)
+    except:
+        print("Drones pols generator: Failed to get cf names -->using offline planning")
+        pols_gen.online_planning = False
 
     # path subscribers
     rospy.Subscriber('drone1Path',  Path, pols_gen.path_callback)
     rospy.Subscriber('drone2Path',  Path, pols_gen.path_callback)
 
-    # drones positions subscriber
-    leader_top = '/pixy/vicon/demo_crazyflie{}/demo_crazyflie{}/odom'.format(leader_id, leader_id)
-    follower_top = '/pixy/vicon/demo_crazyflie{}/demo_crazyflie{}/odom'.format(follower_id, follower_id)
-
-    rospy.Subscriber(leader_top, Odometry,   pols_gen.leader_pos_callback)
-    rospy.Subscriber(follower_top, Odometry, pols_gen.follower_pos_callback)
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
 
