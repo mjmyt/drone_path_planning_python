@@ -299,6 +299,9 @@ def start_planner_callback(msg):
         rospy.logerr("Path not found! Shutting down node...")
         sys.exit(0)
 
+    while finished_planning_sub.get_num_connections() == 0:
+        rospy.sleep(0.1)
+
     finished_planning_sub.publish("Finished planning")
     data, dynamic_path = publish_data_after_planning()
     visualize_in_rviz(data, dynamic_path, rb, robPub, env, envPub)
@@ -312,7 +315,7 @@ def publish_data_after_planning():
     dynamic_path = generate_dynamic_path_msg(data)
     print("Loaded and generated dynamic path")
 
-    trajPub.publish(dynamic_path.Path)
+    # trajPub.publish(dynamic_path.Path)
 
     print("Waiting for connections to the  /dynamicRigiBodyPath topic...")
     while dynamic_path_pub.get_num_connections() == 0:

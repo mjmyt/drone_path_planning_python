@@ -1,6 +1,6 @@
 visualization: True #TODO:icluse this option in launch file
 rope_length: 1.5
-calculate_new_path: True
+calculate_new_path: False
 timeout: 120
 
 # env_mesh: "env-scene-ltu-experiment-hole-inclined"
