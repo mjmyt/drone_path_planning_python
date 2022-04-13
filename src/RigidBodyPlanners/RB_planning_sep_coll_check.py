@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Author: Mark Moll
+import time
 from click import echo_via_pager
 from stl import mesh
 from mpl_toolkits.mplot3d import Axes3D
@@ -34,7 +35,7 @@ import os
 print("cwd:", os.getcwd())
 
 
-SHOW_VALID_STATES_CNTR = 0
+SHOW_VALID_STATES_CNTR = 1
 
 
 class PlannerSepCollision:
@@ -152,7 +153,14 @@ class PlannerSepCollision:
         # this will automatically choose a default planner with
         # default parameters
         print(f"Solving with timeout: {timeout} sec...")
+        # calculate dt
+
+        t0 = time.process_time()
         solved = self.ss.solve(timeout)
+        dt = time.process_time()-t0
+        print(" ")
+        print("Planning took %.3f msec" % (dt*1000.0))
+
         if solved:
             print("Found solution...")
             # try to shorten the path
@@ -204,18 +212,16 @@ class PlannerSepCollision:
     def isStateValid(self, state):
         self.valid_states_counter += 1
 
-        if SHOW_VALID_STATES_CNTR and self.valid_states_counter % 100 == 0:
-            print(f"Valid states: {self.valid_states_counter}")
-
+        t0 = time.time()
         pos = [state[0], state[1], state[2]]
         q = tf.transformations.quaternion_from_euler(0, 0, state[3])
 
         self.checker.set_robot_transform(pos, q)
         no_collision = not self.checker.check_collision()
-        # print("No collision:", no_collision)
+        dt = time.time()-t0
 
-        # euler = tf.euler_from_quaternion(q)
-        # print("Euler:", euler[0], euler[1], euler[2])
+        if SHOW_VALID_STATES_CNTR and self.valid_states_counter % 100 == 0:
+            print(f"\r Valid states: {self.valid_states_counter} in time: {dt*1000:.2f} ms", end="")
 
         return no_collision
 
@@ -242,12 +248,15 @@ def isBetween(x, min, max):
 
 if __name__ == "__main__":
     # checker.visualize()
-    env_mesh_name = "env-scene-hole.stl"
+    env_mesh_name = "env-scene-ltu-experiment.stl"
+
     robot_mesh_name = "robot-scene-triangle.stl"
+    robot_mesh_name = "custom_triangle_robot.stl"
+
     planner = PlannerSepCollision(env_mesh_name, robot_mesh_name)
 
-    start_pos = [-4, -2, 2]
-    goal_pos = [4, 2, 2]
+    start_pos = [0, 3, 1]
+    goal_pos = [0, 5, 1]
 
     # start
     start_pose = PoseStamped()
@@ -267,6 +276,6 @@ if __name__ == "__main__":
 
     planner.set_start_goal(start_pose.pose, goal_pose.pose)
     planner.set_planner()
-    solved = planner.solve(timeout=80.0)
+    solved = planner.solve(timeout=10.0)
     if solved:
         planner.visualize_path()
