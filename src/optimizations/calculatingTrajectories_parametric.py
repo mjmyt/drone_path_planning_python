@@ -257,7 +257,43 @@ def visualize_trajectory3D(pols):
     plt.show()
 
 
-timestep = 2
+def interpolate_trajectory(wps):
+    # waypoints:list of Point_time instances
+    # dt:time step
+    # returns:list of Point_time instances
+
+    N = len(wps)
+    interpolated = np.zeros((2*N, 3))
+    print("N:", N)
+    print(len(interpolated))
+    wps = np.array(wps)
+
+    for i in range(N):
+        interpolated[2*i] = wps[i]
+        if i == N-1:
+            break
+
+        interpolated[2*i+1] = (wps[i] + wps[i+1])/2
+
+    return interpolated
+
+
+def get_distances_between_wps(wps):
+    # waypoints:matrix Nx3 of waypoints
+    # returns:list of distances
+
+    # check if np.array
+    if not isinstance(wps, np.ndarray):
+        wps = np.array(wps)
+
+    N = len(wps)
+    distances = np.zeros(N-1)
+    for i in range(N-1):
+        distances[i] = np.linalg.norm(wps[i+1] - wps[i])
+    return distances
+
+
+timestep = 0.2
 test_data = [
     [-1.0, 5.0, 1.0, 0.0],
     [-0.9105214656082087, 4.866527813557898, 0.9821609406403813, 0.02039080103534039],
@@ -299,9 +335,34 @@ test_data_osc = [
     [0.3499999940395355,     6.0,                    0.75]
 ]
 
+cpp_test = [
+    [0.328495, 2.81351, 0.3],
+    [0.322653, 2.84516, 0.300714],
+    [0.298128, 2.98908, 0.306533],
+    [0.294266, 3.01236, 0.307686],
+    [0.285671, 3.1631, 0.323937],
+    [0.284709, 3.18281, 0.326155],
+    [0.273088, 3.41914, 0.352846],
+    [0.270273, 3.58228, 0.373881],
+    [0.271776, 4.59654, 0.513801],
+    [0.297746, 5.04502, 0.588241],
+    [0.343738, 5.87621, 0.728814],
+    [0.35, 6, 0.75]
+]
+
+
 if __name__ == "__main__":
+
     traj_points = []
-    data_to_test = test_data_osc
+    data_to_test = cpp_test
+
+    dists = get_distances_between_wps(data_to_test)
+    print(dists)
+    input("Press Enter to continue...")
+
+    # data_to_test = test_data_osc[:10]
+    # data_to_test = interpolate_trajectory(test_data_osc)
+    # delete last row
     # traj_points.append(Point_time(Waypoint(0.0, 0.0,  0.0, 0.0), t=0))
     # traj_points.append(Point_time(Waypoint(2.0, 2.2,  0.3, 0.0), t=1))
     # traj_points.append(Point_time(Waypoint(4.0, 8.0,  0.8, 0.0), t=3))
@@ -325,6 +386,8 @@ if __name__ == "__main__":
     xs, ys, zs = [], [], []
     vel_xs, vel_ys, vel_zs = [], [], []
     acc_xs, acc_ys, acc_zs = [], [], []
+    jerk_xs, jerk_ys, jerk_zs = [], [], []
+
     ts = []
     for i in range(PLOT_POINTS):
         t = i*dt
@@ -342,28 +405,31 @@ if __name__ == "__main__":
         acc_ys.append(pc_pols[1].derivative().derivative().eval(t))
         acc_zs.append(pc_pols[2].derivative().derivative().eval(t))
 
-    # # # 3Dplot them
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # ax.set_xlabel('X')
-    # ax.set_ylabel('Y')
-    # ax.set_zlabel('Z')
+        jerk_xs.append(pc_pols[0].derivative().derivative().derivative().eval(t))
+        jerk_ys.append(pc_pols[1].derivative().derivative().derivative().eval(t))
+        jerk_zs.append(pc_pols[2].derivative().derivative().derivative().eval(t))
 
-    # ax.scatter(xs, ys, zs, c='r', marker='o')
+    # # 3Dplot them
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+
+    ax.scatter(xs, ys, zs, c='r', marker='o')
     # plt.show()
 
     plt.figure()
 
     plt.subplot(3, 4, 1,)
-    plt.title("Original")
-    plt.scatter([i*timestep for i in range(len(data_to_test))], [point[0] for point in data_to_test], c='r', marker='o')
+    plt.title("Jerk")
     plt.grid(True)
-
+    plt.stem(ts, jerk_xs,  label='x')
     plt.subplot(3, 4, 5)
-    plt.scatter([i*timestep for i in range(len(data_to_test))], [point[1] for point in data_to_test], c='r', marker='o')
+    plt.stem(ts, jerk_ys,  label='y')
     plt.grid(True)
     plt.subplot(3, 4, 9)
-    plt.scatter([i*timestep for i in range(len(data_to_test))], [point[2] for point in data_to_test], c='r', marker='o')
+    plt.stem(ts, jerk_zs,  label='z')
     plt.grid(True)
 
     plt.subplot(3, 4, 2)
@@ -383,7 +449,6 @@ if __name__ == "__main__":
     plt.subplot(3, 4, 3)
     plt.title("Velocity")
     plt.plot(ts, vel_xs)
-    plt.scatter([i*timestep for i in range(len(data_to_test))], [point[0]/100 for point in data_to_test], c='r', marker='o')
     plt.grid(True)
     plt.subplot(3, 4, 7)
     plt.plot(ts, vel_ys)
