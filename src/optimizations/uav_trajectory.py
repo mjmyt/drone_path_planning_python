@@ -168,6 +168,10 @@ class PiecewisePolynomial():
 
             t_counting = t_counting + self.time_durations[i]
 
+    def derivative(self):
+        return PiecewisePolynomial(
+            [p.derivative() for p in self.pols], self.time_durations)
+
 
 class Waypoint():
     def __init__(self, x, y, z, yaw):
